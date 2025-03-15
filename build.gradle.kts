@@ -26,14 +26,15 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 
 	// Security
+	implementation("org.keycloak:keycloak-admin-client:26.0.4")
 //	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 //	implementation("org.springframework.boot:spring-boot-starter-security")
 
 	// Data
-//	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-//	runtimeOnly("org.postgresql:postgresql")
-//	implementation("org.flywaydb:flyway-core")
-//	implementation("org.flywaydb:flyway-database-postgresql")
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	runtimeOnly("org.postgresql:postgresql")
+	implementation("org.flywaydb:flyway-core")
+	implementation("org.flywaydb:flyway-database-postgresql")
 
 
 	// Kotlin

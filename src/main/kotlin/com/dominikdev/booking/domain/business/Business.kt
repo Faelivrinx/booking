@@ -15,8 +15,6 @@ class Business private constructor(
     private var name: Name,
     private var email: Email,
     private var phone: PhoneNumber?,
-    private var openingTime: LocalTime,
-    private var closingTime: LocalTime,
     val createdAt: LocalDateTime,
     var updatedAt: LocalDateTime,
 ) {
@@ -27,27 +25,47 @@ class Business private constructor(
             keycloakId: String,
             name: Name,
             email: Email,
-            phoneNumber: PhoneNumber?,
-            openingTime: LocalTime? = null,
-            closingTime: LocalTime? = null
+            phoneNumber: PhoneNumber?
         ): Business {
-            val effectiveOpeningTime = openingTime ?: LocalTime.of(9, 0)
-            val effectiveClosingTime = closingTime ?: LocalTime.of(17, 0)
 
-            if (effectiveOpeningTime.isAfter(effectiveClosingTime)) {
-                throw BusinessDomainException("Opening time must be before closing time")
-            }
-
-            return Business(
+            val business = Business(
                 id = BusinessId.generate(),
                 keycloakId = keycloakId,
                 name = name,
                 email = email,
                 phone = phoneNumber,
-                openingTime = effectiveOpeningTime,
-                closingTime = effectiveClosingTime,
                 createdAt = LocalDateTime.now(),
                 updatedAt = LocalDateTime.now()
+            )
+
+            business.registerEvent(
+                BusinessCreatedEvent(
+                    businessId = business.id,
+                    keycloakId = business.keycloakId,
+                    name = business.getName().value,
+                    email = business.getEmail().value
+                )
+            )
+
+            return business
+        }
+        fun reconstitute(
+            id: BusinessId,
+            keycloakId: String,
+            name: String,
+            email: String,
+            phoneNumber: String?,
+            createdAt: LocalDateTime,
+            updatedAt: LocalDateTime
+        ): Business {
+            return Business(
+                id = id,
+                keycloakId = keycloakId,
+                name = Name.of(name),
+                email = Email.of(email),
+                phone = phoneNumber?.let { PhoneNumber.of(it) },
+                createdAt = createdAt,
+                updatedAt = updatedAt
             )
         }
     }
@@ -63,32 +81,19 @@ class Business private constructor(
         this.updatedAt = LocalDateTime.now()
     }
 
-    fun updateBusinessHours(openingTime: LocalTime, closingTime: LocalTime) {
-        validateBusinessHours(openingTime, closingTime)
-
-        this.openingTime = openingTime
-        this.closingTime = closingTime
-        this.updatedAt = LocalDateTime.now()
-    }
-
-    fun isWithinBusinessHours(dateTime: LocalDateTime): Boolean {
-        val time = dateTime.toLocalTime()
-        return !time.isBefore(openingTime) && !time.isAfter(closingTime)
-    }
-
     fun getName(): Name = name
 
     fun getEmail(): Email = email
 
     fun getPhoneNumber(): PhoneNumber? = phone
 
-    fun getOpeningTime(): LocalTime = openingTime
-
-    fun getClosingTime(): LocalTime = closingTime
-
     fun getEvents(): List<DomainEvent> = domainEvents.toList()
 
     fun clearEvents() {
         domainEvents.clear()
+    }
+
+    fun registerEvent(event: DomainEvent) {
+        domainEvents.add(event)
     }
 }

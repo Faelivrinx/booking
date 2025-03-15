@@ -2,30 +2,29 @@ spring:
   application:
     name: appointment-booking-service
   
-#  datasource:
-#    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:appointment_db}
-#    username: ${DB_USERNAME:postgres}
-#    password: ${DB_PASSWORD:postgres}
-#    hikari:
-#      maximum-pool-size: ${DB_POOL_SIZE:10}
-#      minimum-idle: ${DB_MIN_IDLE:5}
-#
-#  jpa:
-#    database-platform: org.hibernate.dialect.PostgreSQLDialect
-#    hibernate:
-#      ddl-auto: validate
-#    properties:
-#      hibernate:
-#        format_sql: ${FORMAT_SQL:false}
-#        jdbc:
-#          time_zone: UTC
-#    show-sql: ${SHOW_SQL:false}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:appointment_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: ${DB_MIN_IDLE:5}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: ${FORMAT_SQL:false}
+        jdbc:
+          time_zone: UTC
+    show-sql: ${SHOW_SQL:false}
   
-#  flyway:
-#    enabled: ${FLYWAY_ENABLED:true}
-#    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
-#    locations: classpath:db/migration
-#    clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    locations: classpath:db/migration
+    clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
   
   jackson:
     date-format: com.fasterxml.jackson.databind.util.StdDateFormat
@@ -70,17 +69,21 @@ logging:
 #    name: ${LOG_FILE_PATH:/var/log/appointment-service/application.log}
 
 # Keycloak Configuration
-#keycloak:
-#  enabled: ${KEYCLOAK_ENABLED:true}
-#  realm: ${KEYCLOAK_REALM:appointment-realm}
-#  auth-server-url: ${KEYCLOAK_URL:http://localhost:8081/auth}
-#  resource: ${KEYCLOAK_CLIENT_ID:appointment-client}
-#  public-client: false
-#  bearer-only: true
-#  credentials:
-#    secret: ${KEYCLOAK_CLIENT_SECRET:change-me-in-production}
-#  ssl-required: ${KEYCLOAK_SSL_REQUIRED:external}
-#  use-resource-role-mappings: true
+keycloak:
+  enabled: ${KEYCLOAK_ENABLED:true}
+  realm: ${KEYCLOAK_REALM:appointment-realm}
+  auth-server-url: ${KEYCLOAK_URL:http://localhost:8080/auth}
+  resource: ${KEYCLOAK_CLIENT_ID:appointment-client}
+  public-client: false
+  bearer-only: true
+  credentials:
+    secret: ${KEYCLOAK_CLIENT_SECRET:change-me-in-production}
+  ssl-required: ${KEYCLOAK_SSL_REQUIRED:external}
+  use-resource-role-mappings: true
+  # Admin credentials for Keycloak Admin Client
+  admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+  admin-realm: ${KEYCLOAK_ADMIN_REALM:master}
 
 # Management endpoints configuration
 management:
