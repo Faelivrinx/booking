@@ -72,7 +72,7 @@ logging:
 keycloak:
   enabled: ${KEYCLOAK_ENABLED:true}
   realm: ${KEYCLOAK_REALM:appointment-realm}
-  auth-server-url: ${KEYCLOAK_URL:http://localhost:8080/auth}
+  auth-server-url: ${KEYCLOAK_URL:http://localhost:8080}
   resource: ${KEYCLOAK_CLIENT_ID:appointment-client}
   public-client: false
   bearer-only: true
