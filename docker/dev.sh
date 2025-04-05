@@ -49,7 +49,7 @@ function start_infra {
     exit 1
   fi
 
-  docker-compose up -d
+  docker compose up -d
   echo -e "${GREEN}Infrastructure started:${NC}"
   echo -e "  - PostgreSQL: localhost:5432"
   echo -e "  - Keycloak: http://localhost:8080"
@@ -67,23 +67,23 @@ start)
 stop)
   check_docker
   echo -e "${YELLOW}Stopping infrastructure...${NC}"
-  docker-compose down
+  docker compose down
   echo -e "${GREEN}Infrastructure stopped${NC}"
   ;;
 restart)
   check_docker
   echo -e "${YELLOW}Restarting infrastructure...${NC}"
-  docker-compose down
+  docker compose down
   start_infra
   ;;
 logs)
   check_docker
-  docker-compose logs -f
+  docker compose logs -f
   ;;
 ps)
   check_docker
   echo -e "${YELLOW}Running containers:${NC}"
-  docker-compose ps
+  docker compose ps
   ;;
 clean)
   check_docker
@@ -92,13 +92,13 @@ clean)
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Stopping infrastructure and removing volumes...${NC}"
-    docker-compose down -v
+    docker compose down -v
     echo -e "${GREEN}Infrastructure cleaned${NC}"
   fi
   ;;
 keycloak)
   check_docker
-  if ! docker-compose ps keycloak | grep -q "Up"; then
+  if ! docker compose ps keycloak | grep -q "Up"; then
     echo -e "${RED}Error: Keycloak is not running${NC}"
     echo "Start the infrastructure first with: ./dev.sh start"
     exit 1
@@ -108,7 +108,7 @@ keycloak)
   ;;
 db-connect)
   check_docker
-  if ! docker-compose ps postgres | grep -q "Up"; then
+  if ! docker compose ps postgres | grep -q "Up"; then
     echo -e "${RED}Error: PostgreSQL is not running${NC}"
     echo "Start the infrastructure first with: ./dev.sh start"
     exit 1
@@ -123,4 +123,3 @@ help | *)
   show_help
   ;;
 esac
-

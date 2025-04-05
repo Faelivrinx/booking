@@ -24,20 +24,16 @@ class ClientService(
         val email = Email.of(request.email)
         val phoneNumber = PhoneNumber.of(request.phoneNumber)
 
-        // Check if client already exists
         clientRepository.findByEmail(email.value)?.let {
             if (it.isVerified()) {
                 throw ClientDomainException("Client with email ${request.email} already exists")
             } else {
-                // Client exists but is not verified, so we can regenerate verification code
                 val newCode = generateVerificationCode()
                 it.regenerateVerificationCode(newCode)
                 val savedClient = clientRepository.save(it)
 
-                // Publish events
                 publishEvents(it)
 
-                // Send verification SMS
                 sendVerificationSms(it.getPhoneNumber(), newCode)
 
                 return RegistrationResponse(
@@ -50,17 +46,14 @@ class ClientService(
             }
         }
 
-        // Check if phone number is already in use
         clientRepository.findByPhoneNumber(phoneNumber.value)?.let {
             if (it.isVerified()) {
                 throw ClientDomainException("Phone number ${request.phoneNumber} already in use")
             }
         }
 
-        // Generate verification code
         val verificationCode = generateVerificationCode()
 
-        // Create client
         val client = Client.register(
             email = email,
             phoneNumber = phoneNumber,
@@ -69,13 +62,10 @@ class ClientService(
             verificationCode = verificationCode
         )
 
-        // Save client
         val savedClient = clientRepository.save(client)
 
-        // Publish events
         publishEvents(client)
 
-        // Send verification SMS
         sendVerificationSms(phoneNumber.value, verificationCode)
 
         return RegistrationResponse(
@@ -99,7 +89,6 @@ class ClientService(
         }
 
         try {
-            // Create user in Keycloak
             val keycloakId = keycloakAdapter.createClientUser(
                 email = email.value,
                 name = "${client.getFirstName()} ${client.getLastName()}",
@@ -107,11 +96,9 @@ class ClientService(
                 password = request.password
             )
 
-            // Verify client with verification code
             val verified = client.verify(request.verificationCode, keycloakId)
 
             if (!verified) {
-                // Delete created Keycloak user if verification fails
                 try {
                     keycloakAdapter.deleteUser(keycloakId)
                 } catch (e: Exception) {
@@ -120,10 +107,8 @@ class ClientService(
                 throw ClientDomainException("Invalid verification code")
             }
 
-            // Save verified client
             val savedClient = clientRepository.save(client)
 
-            // Publish events
             publishEvents(client)
 
             return mapToResponse(savedClient)
@@ -152,10 +137,8 @@ class ClientService(
 
         clientRepository.save(client)
 
-        // Publish events
         publishEvents(client)
 
-        // Send verification SMS
         return sendVerificationSms(client.getPhoneNumber(), newCode)
     }
 
