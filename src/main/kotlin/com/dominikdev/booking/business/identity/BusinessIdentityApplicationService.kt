@@ -1,13 +1,6 @@
-package com.dominikdev.booking.business.account.application.service
+package com.dominikdev.booking.business.identity
 
-import com.dominikdev.booking.business.account.application.command.CreateBusinessCommand
-import com.dominikdev.booking.business.account.application.command.UpdateBusinessCommand
-import com.dominikdev.booking.business.account.application.dto.BusinessDTO
-import com.dominikdev.booking.business.account.application.port.out.UserManagementPort
-import com.dominikdev.booking.business.account.domain.Business
-import com.dominikdev.booking.business.account.domain.BusinessDomainException
-import com.dominikdev.booking.business.account.domain.BusinessId
-import com.dominikdev.booking.business.account.domain.BusinessRepository
+import com.dominikdev.booking.shared.infrastructure.keycloak.KeycloakUserManagementAdapter
 import com.dominikdev.booking.shared.values.Email
 import com.dominikdev.booking.shared.values.Name
 import com.dominikdev.booking.shared.values.PhoneNumber
@@ -17,21 +10,21 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Service
-class BusinessApplicationService(
-    private val businessRepository: BusinessRepository,
-    private val userManagementPort: UserManagementPort
+class BusinessIdentityApplicationService(
+    private val businessRepository: BusinessIdentityJpaRepository,
+    private val userManagementPort: KeycloakUserManagementAdapter
 ) {
     private val logger = KotlinLogging.logger {}
 
     @Transactional
-    fun createBusiness(command: CreateBusinessCommand): BusinessDTO {
+    fun createBusinessIdentity(command: CreateBusinessIdentityCommand): BusinessIdentityDTO {
         val email = Email.of(command.email)
-        if (businessRepository.findByEmail(email) != null) {
+        if (businessRepository.findByEmail(email.value) != null) {
             throw BusinessDomainException("Business with email ${command.email} already exists")
         }
 
         // Generate a business ID first
-        val businessId = BusinessId.generate()
+        val businessIdentityId = BusinessIdentityId.generate()
 
         // Create the Keycloak user with the business ID
         val userId = try {
@@ -40,7 +33,7 @@ class BusinessApplicationService(
                 name = command.name,
                 phone = command.phoneNumber,
                 password = command.initialPassword,
-                businessId = businessId.toString()
+                businessId = businessIdentityId.toString()
             )
         } catch (e: Exception) {
             logger.error(e) { "Failed to create Keycloak user for business: ${e.message}" }
@@ -48,8 +41,8 @@ class BusinessApplicationService(
         }
 
         // Create business with the generated ID and Keycloak ID
-        val business = Business.create(
-            id = businessId,
+        val businessIdentity = BusinessIdentity.create(
+            id = businessIdentityId,
             keycloakId = userId,
             name = Name.of(command.name),
             email = email,
@@ -57,7 +50,7 @@ class BusinessApplicationService(
         )
 
         try {
-            val savedBusiness = businessRepository.save(business)
+            val savedBusiness = businessRepository.save(businessIdentity)
             return mapToDTO(savedBusiness)
         } catch (e: Exception) {
             try {
@@ -70,15 +63,14 @@ class BusinessApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun getBusinessById(businessId: UUID): BusinessDTO {
-        val business = businessRepository.findById(BusinessId.from(businessId))
-            ?: throw BusinessDomainException("Business not found for id: $businessId")
+    fun getBusinessById(businessId: UUID): BusinessIdentityDTO {
+        val business = businessRepository.findById(businessId).orElseThrow { throw BusinessDomainException("Business not found for id: $businessId") }
 
         return mapToDTO(business)
     }
 
     @Transactional(readOnly = true)
-    fun getBusinessByKeycloakId(keycloakId: String): BusinessDTO {
+    fun getBusinessByKeycloakId(keycloakId: String): BusinessIdentityDTO {
         val business = businessRepository.findByKeycloakId(keycloakId)
             ?: throw BusinessDomainException("Business not found for keycloakId: $keycloakId")
 
@@ -86,13 +78,12 @@ class BusinessApplicationService(
     }
 
     @Transactional
-    fun updateBusiness(businessId: UUID, command: UpdateBusinessCommand): BusinessDTO {
-        val business = businessRepository.findById(BusinessId.from(businessId))
-            ?: throw BusinessDomainException("Business not found for id: $businessId")
+    fun updateBusiness(businessId: UUID, command: UpdateBusinessCommand): BusinessIdentityDTO {
+        val business = businessRepository.findById(businessId).orElseThrow { throw BusinessDomainException("Business not found for id: $businessId") }
 
         val newEmail = Email.of(command.email)
-        if (business.getEmail().value != newEmail.value) {
-            businessRepository.findByEmail(newEmail)?.let {
+        if (business.email != newEmail.value) {
+            businessRepository.findByEmail(newEmail.value)?.let {
                 if (it.id != business.id) {
                     throw BusinessDomainException("Business with email ${command.email} already exists")
                 }
@@ -109,14 +100,14 @@ class BusinessApplicationService(
         return mapToDTO(updatedBusiness)
     }
 
-    private fun mapToDTO(business: Business): BusinessDTO {
-        return BusinessDTO(
-            id = business.id.value,
-            name = business.getName().value,
-            email = business.getEmail().value,
-            phoneNumber = business.getPhoneNumber()?.value,
-            createdAt = business.createdAt,
-            updatedAt = business.updatedAt
+    private fun mapToDTO(businessIdentity: BusinessIdentity): BusinessIdentityDTO {
+        return BusinessIdentityDTO(
+            id = businessIdentity.id,
+            name = businessIdentity.name,
+            email = businessIdentity.email,
+            phoneNumber = businessIdentity.phoneNumber,
+            createdAt = businessIdentity.createdAt,
+            updatedAt = businessIdentity.updatedAt
         )
     }
 }

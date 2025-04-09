@@ -1,4 +1,4 @@
-package com.dominikdev.booking.business.account.domain
+package com.dominikdev.booking.business.identity
 
 import com.dominikdev.booking.shared.exception.DomainException
 

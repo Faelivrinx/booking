@@ -1,23 +1,18 @@
-package com.dominikdev.booking.business.account
+package com.dominikdev.booking.business.identity
 
-import com.dominikdev.booking.business.account.application.command.CreateBusinessCommand
-import com.dominikdev.booking.business.account.application.command.UpdateBusinessCommand
-import com.dominikdev.booking.business.account.application.dto.BusinessDTO
-import com.dominikdev.booking.business.account.application.port.`in`.BusinessPort
-import com.dominikdev.booking.business.account.application.service.BusinessApplicationService
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class BusinessAccountFacade(private val businessApplicationService: BusinessApplicationService) : BusinessPort {
+class BusinessIdentityFacade(private val businessApplicationService: BusinessIdentityApplicationService) {
 
     /**
      * Creates a new business with the provided information.
      * @param command The command containing business creation details
      * @return The created business data
      */
-    override fun createBusiness(command: CreateBusinessCommand): BusinessDTO {
-        return businessApplicationService.createBusiness(command)
+    fun createBusinessIdentity(command: CreateBusinessIdentityCommand): BusinessIdentityDTO {
+        return businessApplicationService.createBusinessIdentity(command)
     }
 
     /**
@@ -25,7 +20,7 @@ class BusinessAccountFacade(private val businessApplicationService: BusinessAppl
      * @param businessId The unique identifier of the business
      * @return The business data
      */
-    override fun getBusinessById(businessId: UUID): BusinessDTO {
+    fun getBusinessById(businessId: UUID): BusinessIdentityDTO {
         return businessApplicationService.getBusinessById(businessId)
     }
 
@@ -34,7 +29,7 @@ class BusinessAccountFacade(private val businessApplicationService: BusinessAppl
      * @param keycloakId The Keycloak user ID associated with the business
      * @return The business data
      */
-    override fun getBusinessByKeycloakId(keycloakId: String): BusinessDTO {
+    fun getBusinessByKeycloakId(keycloakId: String): BusinessIdentityDTO {
         return businessApplicationService.getBusinessByKeycloakId(keycloakId)
     }
 
@@ -44,7 +39,7 @@ class BusinessAccountFacade(private val businessApplicationService: BusinessAppl
      * @param command The command containing updated business details
      * @return The updated business data
      */
-    override fun updateBusiness(businessId: UUID, command: UpdateBusinessCommand): BusinessDTO {
+    fun updateBusiness(businessId: UUID, command: UpdateBusinessCommand): BusinessIdentityDTO {
         return businessApplicationService.updateBusiness(businessId, command)
     }
 }

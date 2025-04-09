@@ -1,7 +1,6 @@
 package com.dominikdev.booking.shared.infrastructure.keycloak
 
-import com.dominikdev.booking.business.account.application.port.out.UserManagementPort
-import com.dominikdev.booking.business.account.domain.BusinessDomainException
+import com.dominikdev.booking.business.identity.BusinessDomainException
 import com.dominikdev.booking.clients.ClientDomainException
 import com.dominikdev.booking.shared.exception.DomainException
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -18,7 +17,7 @@ import java.util.Collections
 class KeycloakUserManagementAdapter(
     private val keycloak: Keycloak,
     @Value("\${keycloak.realm}") private val realm: String
-) : UserManagementPort {
+) {
 
     private val logger = KotlinLogging.logger {}
 
@@ -28,7 +27,7 @@ class KeycloakUserManagementAdapter(
         const val ROLE_CLIENT = "CLIENT"
     }
 
-    override fun createBusinessUser(
+    fun createBusinessUser(
         email: String,
         name: String,
         phone: String?,
@@ -47,7 +46,7 @@ class KeycloakUserManagementAdapter(
         return createUser(email, name, phone, password, ROLE_CLIENT, null, ::ClientDomainException)
     }
 
-    override fun deleteUser(userId: String) {
+    fun deleteUser(userId: String) {
         try {
             keycloak.realm(realm).users().delete(userId)
         } catch (e: Exception) {

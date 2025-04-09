@@ -1,9 +1,9 @@
-package com.dominikdev.booking.business.account.application.dto
+package com.dominikdev.booking.business.identity
 
 import java.time.LocalDateTime
 import java.util.UUID
 
-data class BusinessDTO(
+data class BusinessIdentityDTO(
     val id: UUID,
     val name: String,
     val email: String,

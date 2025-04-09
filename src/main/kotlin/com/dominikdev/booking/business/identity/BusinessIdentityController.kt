@@ -1,12 +1,7 @@
-package com.dominikdev.booking.business.account.infrastructure.adapter.`in`
+package com.dominikdev.booking.business.identity
 
-import com.dominikdev.booking.business.account.application.command.CreateBusinessCommand
-import com.dominikdev.booking.business.account.application.command.UpdateBusinessCommand
-import com.dominikdev.booking.business.account.application.dto.BusinessDTO
-import com.dominikdev.booking.business.account.BusinessAccountFacade
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -17,18 +12,18 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/businesses")
-class BusinessController(private val businessAccountFacade: BusinessAccountFacade) {
+class BusinessIdentityController(private val businessAccountFacade: BusinessIdentityFacade) {
 
     @PostMapping
-    fun createBusiness(@RequestBody request: CreateBusinessRequest): ResponseEntity<BusinessDTO> {
-        val command = CreateBusinessCommand(
+    fun createBusiness(@RequestBody request: CreateBusinessRequest): ResponseEntity<BusinessIdentityDTO> {
+        val command = CreateBusinessIdentityCommand(
             name = request.name,
             email = request.email,
             phoneNumber = request.phoneNumber,
             initialPassword = request.password
         )
 
-        val business = businessAccountFacade.createBusiness(command)
+        val business = businessAccountFacade.createBusinessIdentity(command)
         return ResponseEntity(business, HttpStatus.CREATED)
     }
 
@@ -36,7 +31,7 @@ class BusinessController(private val businessAccountFacade: BusinessAccountFacad
     fun updateBusiness(
         @PathVariable businessId: String,
         @RequestBody request: UpdateBusinessRequest
-    ): ResponseEntity<BusinessDTO> {
+    ): ResponseEntity<BusinessIdentityDTO> {
         val command = UpdateBusinessCommand(
             name = request.name,
             email = request.email,

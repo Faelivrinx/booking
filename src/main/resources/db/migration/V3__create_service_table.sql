@@ -1,6 +1,6 @@
 CREATE TABLE services (
     id UUID PRIMARY KEY,
-    business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    business_id UUID NOT NULL REFERENCES businesses_identity(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     duration_minutes INT NOT NULL,
     description VARCHAR(500),

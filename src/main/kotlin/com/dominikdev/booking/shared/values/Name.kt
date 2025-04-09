@@ -1,6 +1,6 @@
 package com.dominikdev.booking.shared.values
 
-import com.dominikdev.booking.business.account.domain.BusinessDomainException
+import com.dominikdev.booking.business.identity.BusinessDomainException
 
 
 data class Name private constructor(val value: String) {

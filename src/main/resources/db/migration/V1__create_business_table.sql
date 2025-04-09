@@ -1,4 +1,4 @@
-CREATE TABLE businesses (
+CREATE TABLE businesses_identity (
     id UUID PRIMARY KEY,
     keycloak_id VARCHAR(255) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE businesses (
 );
 
 -- Create index on email for faster lookups
-CREATE INDEX idx_business_email ON businesses(email);
+CREATE INDEX idx_business_email ON businesses_identity(email);
 
 -- Create index on keycloak_id for faster lookups
-CREATE INDEX idx_business_keycloak_id ON businesses(keycloak_id);
+CREATE INDEX idx_business_keycloak_id ON businesses_identity(keycloak_id);
