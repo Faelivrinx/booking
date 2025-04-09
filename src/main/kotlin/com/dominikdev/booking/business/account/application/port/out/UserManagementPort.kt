@@ -1,4 +1,4 @@
-package com.dominikdev.booking.business.profile.application.port.out
+package com.dominikdev.booking.business.account.application.port.out
 
 interface UserManagementPort {
 

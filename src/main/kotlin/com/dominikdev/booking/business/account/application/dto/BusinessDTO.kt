@@ -1,4 +1,4 @@
-package com.dominikdev.booking.business.profile.application.dto
+package com.dominikdev.booking.business.account.application.dto
 
 import java.time.LocalDateTime
 import java.util.UUID

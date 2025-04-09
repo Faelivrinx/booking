@@ -1,4 +1,4 @@
-package com.dominikdev.booking.business.profile.application.command
+package com.dominikdev.booking.business.account.application.command
 
 data class CreateBusinessCommand(
     val name: String,

@@ -1,8 +1,8 @@
-package com.dominikdev.booking.business.profile.application.port.`in`
+package com.dominikdev.booking.business.account.application.port.`in`
 
-import com.dominikdev.booking.business.profile.application.command.CreateBusinessCommand
-import com.dominikdev.booking.business.profile.application.command.UpdateBusinessCommand
-import com.dominikdev.booking.business.profile.application.dto.BusinessDTO
+import com.dominikdev.booking.business.account.application.command.CreateBusinessCommand
+import com.dominikdev.booking.business.account.application.command.UpdateBusinessCommand
+import com.dominikdev.booking.business.account.application.dto.BusinessDTO
 import java.util.UUID
 
 /**

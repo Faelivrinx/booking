@@ -1,13 +1,13 @@
-package com.dominikdev.booking.business.profile.application.service
+package com.dominikdev.booking.business.account.application.service
 
-import com.dominikdev.booking.business.profile.application.command.CreateBusinessCommand
-import com.dominikdev.booking.business.profile.application.command.UpdateBusinessCommand
-import com.dominikdev.booking.business.profile.application.dto.BusinessDTO
-import com.dominikdev.booking.business.profile.application.port.out.UserManagementPort
-import com.dominikdev.booking.business.profile.domain.Business
-import com.dominikdev.booking.business.profile.domain.BusinessDomainException
-import com.dominikdev.booking.business.profile.domain.BusinessId
-import com.dominikdev.booking.business.profile.domain.BusinessRepository
+import com.dominikdev.booking.business.account.application.command.CreateBusinessCommand
+import com.dominikdev.booking.business.account.application.command.UpdateBusinessCommand
+import com.dominikdev.booking.business.account.application.dto.BusinessDTO
+import com.dominikdev.booking.business.account.application.port.out.UserManagementPort
+import com.dominikdev.booking.business.account.domain.Business
+import com.dominikdev.booking.business.account.domain.BusinessDomainException
+import com.dominikdev.booking.business.account.domain.BusinessId
+import com.dominikdev.booking.business.account.domain.BusinessRepository
 import com.dominikdev.booking.shared.values.Email
 import com.dominikdev.booking.shared.values.Name
 import com.dominikdev.booking.shared.values.PhoneNumber

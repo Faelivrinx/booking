@@ -1,15 +1,15 @@
-package com.dominikdev.booking.business.profile
+package com.dominikdev.booking.business.account
 
-import com.dominikdev.booking.business.profile.application.command.CreateBusinessCommand
-import com.dominikdev.booking.business.profile.application.command.UpdateBusinessCommand
-import com.dominikdev.booking.business.profile.application.dto.BusinessDTO
-import com.dominikdev.booking.business.profile.application.port.`in`.BusinessPort
-import com.dominikdev.booking.business.profile.application.service.BusinessApplicationService
+import com.dominikdev.booking.business.account.application.command.CreateBusinessCommand
+import com.dominikdev.booking.business.account.application.command.UpdateBusinessCommand
+import com.dominikdev.booking.business.account.application.dto.BusinessDTO
+import com.dominikdev.booking.business.account.application.port.`in`.BusinessPort
+import com.dominikdev.booking.business.account.application.service.BusinessApplicationService
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class BusinessFacade(private val businessApplicationService: BusinessApplicationService) : BusinessPort {
+class BusinessAccountFacade(private val businessApplicationService: BusinessApplicationService) : BusinessPort {
 
     /**
      * Creates a new business with the provided information.

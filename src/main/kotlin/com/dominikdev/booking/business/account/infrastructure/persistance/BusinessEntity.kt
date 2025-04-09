@@ -1,4 +1,4 @@
-package com.dominikdev.booking.business.profile.infrastructure.persistance
+package com.dominikdev.booking.business.account.infrastructure.persistance
 
 import java.time.LocalDateTime
 import java.util.UUID

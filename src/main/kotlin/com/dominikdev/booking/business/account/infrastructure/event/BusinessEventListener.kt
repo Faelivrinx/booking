@@ -1,6 +1,6 @@
-package com.dominikdev.booking.business.profile.infrastructure.event
+package com.dominikdev.booking.business.account.infrastructure.event
 
-import com.dominikdev.booking.business.profile.domain.BusinessCreatedEvent
+import com.dominikdev.booking.business.account.domain.BusinessCreatedEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component

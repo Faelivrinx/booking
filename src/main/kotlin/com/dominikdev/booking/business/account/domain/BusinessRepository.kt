@@ -1,4 +1,4 @@
-package com.dominikdev.booking.business.profile.domain
+package com.dominikdev.booking.business.account.domain
 
 import com.dominikdev.booking.shared.values.Email
 

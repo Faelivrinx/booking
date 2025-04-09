@@ -1,7 +1,7 @@
 package com.dominikdev.booking.shared.infrastructure.keycloak
 
-import com.dominikdev.booking.business.profile.application.port.out.UserManagementPort
-import com.dominikdev.booking.business.profile.domain.BusinessDomainException
+import com.dominikdev.booking.business.account.application.port.out.UserManagementPort
+import com.dominikdev.booking.business.account.domain.BusinessDomainException
 import com.dominikdev.booking.clients.ClientDomainException
 import com.dominikdev.booking.shared.exception.DomainException
 import io.github.oshai.kotlinlogging.KotlinLogging

@@ -1,9 +1,9 @@
-package com.dominikdev.booking.business.profile.infrastructure.adapter.`in`
+package com.dominikdev.booking.business.account.infrastructure.adapter.`in`
 
-import com.dominikdev.booking.business.profile.application.command.CreateBusinessCommand
-import com.dominikdev.booking.business.profile.application.command.UpdateBusinessCommand
-import com.dominikdev.booking.business.profile.application.dto.BusinessDTO
-import com.dominikdev.booking.business.profile.BusinessFacade
+import com.dominikdev.booking.business.account.application.command.CreateBusinessCommand
+import com.dominikdev.booking.business.account.application.command.UpdateBusinessCommand
+import com.dominikdev.booking.business.account.application.dto.BusinessDTO
+import com.dominikdev.booking.business.account.BusinessAccountFacade
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -17,7 +17,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/businesses")
-class BusinessController(private val businessFacade: BusinessFacade) {
+class BusinessController(private val businessAccountFacade: BusinessAccountFacade) {
 
     @PostMapping
     fun createBusiness(@RequestBody request: CreateBusinessRequest): ResponseEntity<BusinessDTO> {
@@ -28,7 +28,7 @@ class BusinessController(private val businessFacade: BusinessFacade) {
             initialPassword = request.password
         )
 
-        val business = businessFacade.createBusiness(command)
+        val business = businessAccountFacade.createBusiness(command)
         return ResponseEntity(business, HttpStatus.CREATED)
     }
 
@@ -42,7 +42,7 @@ class BusinessController(private val businessFacade: BusinessFacade) {
 
     @GetMapping("/{businessId}")
     fun getBusinessById(@PathVariable businessId: String): ResponseEntity<BusinessDTO> {
-        val business = businessFacade.getBusinessById(UUID.fromString(businessId))
+        val business = businessAccountFacade.getBusinessById(UUID.fromString(businessId))
         return ResponseEntity.ok(business)
     }
 
@@ -57,7 +57,7 @@ class BusinessController(private val businessFacade: BusinessFacade) {
             phoneNumber = request.phoneNumber
         )
 
-        val business = businessFacade.updateBusiness(UUID.fromString(businessId), command)
+        val business = businessAccountFacade.updateBusiness(UUID.fromString(businessId), command)
         return ResponseEntity.ok(business)
     }
 
