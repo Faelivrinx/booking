@@ -22,11 +22,12 @@ class Business private constructor(
             keycloakId: String,
             name: Name,
             email: Email,
-            phoneNumber: PhoneNumber?
+            phoneNumber: PhoneNumber?,
+            id: BusinessId = BusinessId.generate()
         ): Business {
 
             val business = Business(
-                id = BusinessId.generate(),
+                id = id,
                 keycloakId = keycloakId,
                 name = name,
                 email = email,
@@ -46,6 +47,7 @@ class Business private constructor(
 
             return business
         }
+
         fun reconstitute(
             id: BusinessId,
             keycloakId: String,

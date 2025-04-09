@@ -35,11 +35,11 @@ spring:
       adjust-dates-to-context-time-zone: false
       fail-on-unknown-properties: false
   
-#  security:
-#    oauth2:
-#      resourceserver:
-#        jwt:
-#          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8081/auth}/realms/${KEYCLOAK_REALM:appointment-realm}/protocol/openid-connect/certs
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8081/auth}/realms/${KEYCLOAK_REALM:appointment-realm}/protocol/openid-connect/certs
 
 # Server configuration
 server:
@@ -60,7 +60,7 @@ logging:
     root: ${LOG_LEVEL_ROOT:INFO}
     com.dominikdev: ${LOG_LEVEL_APP:DEBUG}
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
-    org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
+    org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:DEBUG}
     org.springframework.transaction: ${LOG_LEVEL_SPRING_TX:INFO}
     org.hibernate: ${LOG_LEVEL_HIBERNATE:INFO}
     org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:INFO}

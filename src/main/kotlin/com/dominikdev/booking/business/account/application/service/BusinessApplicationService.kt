@@ -30,18 +30,30 @@ class BusinessApplicationService(
             throw BusinessDomainException("Business with email ${command.email} already exists")
         }
 
-        val userId = userManagementPort.createBusinessUser(
-            email = command.email,
-            name = command.name,
-            phone = command.phoneNumber,
-            password = command.initialPassword
-        )
+        // Generate a business ID first
+        val businessId = BusinessId.generate()
 
+        // Create the Keycloak user with the business ID
+        val userId = try {
+            userManagementPort.createBusinessUser(
+                email = command.email,
+                name = command.name,
+                phone = command.phoneNumber,
+                password = command.initialPassword,
+                businessId = businessId.toString()
+            )
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to create Keycloak user for business: ${e.message}" }
+            throw e
+        }
+
+        // Create business with the generated ID and Keycloak ID
         val business = Business.create(
+            id = businessId,
             keycloakId = userId,
             name = Name.of(command.name),
             email = email,
-            phoneNumber = PhoneNumber.ofNullable(command.phoneNumber),
+            phoneNumber = PhoneNumber.ofNullable(command.phoneNumber)
         )
 
         try {

@@ -32,20 +32,6 @@ class BusinessController(private val businessAccountFacade: BusinessAccountFacad
         return ResponseEntity(business, HttpStatus.CREATED)
     }
 
-
-//    @GetMapping("/me")
-//    fun getCurrentBusiness(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<BusinessDTO> {
-//        val keycloakId = jwt.subject
-//        val business = businessApplicationService.getBusinessByKeycloakId(keycloakId)
-//        return ResponseEntity.ok(business)
-//    }
-
-    @GetMapping("/{businessId}")
-    fun getBusinessById(@PathVariable businessId: String): ResponseEntity<BusinessDTO> {
-        val business = businessAccountFacade.getBusinessById(UUID.fromString(businessId))
-        return ResponseEntity.ok(business)
-    }
-
     @PutMapping("/{businessId}")
     fun updateBusiness(
         @PathVariable businessId: String,

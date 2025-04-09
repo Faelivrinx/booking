@@ -27,8 +27,8 @@ dependencies {
 
 	// Security
 	implementation("org.keycloak:keycloak-admin-client:26.0.4")
-//	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-//	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 
 	// Data
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")

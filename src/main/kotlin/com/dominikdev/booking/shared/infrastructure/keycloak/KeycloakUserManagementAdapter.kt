@@ -32,18 +32,19 @@ class KeycloakUserManagementAdapter(
         email: String,
         name: String,
         phone: String?,
-        password: String
+        password: String,
+        businessId: String
     ): String {
-        return createUser(email, name, phone, password, ROLE_BUSINESS, ::BusinessDomainException)
+        return createUser(email, name, phone, password, ROLE_BUSINESS, businessId, ::BusinessDomainException)
     }
 
-        fun createClientUser(
+    fun createClientUser(
         email: String,
         name: String,
         phone: String?,
         password: String
     ): String {
-        return createUser(email, name, phone, password, ROLE_CLIENT, ::ClientDomainException)
+        return createUser(email, name, phone, password, ROLE_CLIENT, null, ::ClientDomainException)
     }
 
     override fun deleteUser(userId: String) {
@@ -72,10 +73,11 @@ class KeycloakUserManagementAdapter(
         phone: String?,
         password: String,
         role: String,
+        businessId: String?,
         exceptionFactory: (String, Throwable?) -> T
     ): String {
         try {
-            val user = createUserRepresentation(email, name, phone, password)
+            val user = createUserRepresentation(email, name, phone, password, businessId)
 
             // Create user in Keycloak
             val response = keycloak.realm(realm).users().create(user)
@@ -108,7 +110,8 @@ class KeycloakUserManagementAdapter(
         email: String,
         name: String,
         phone: String?,
-        password: String
+        password: String,
+        businessId: String?
     ): UserRepresentation {
         val nameParts = name.split(" ", limit = 2)
         val firstName = nameParts[0]
@@ -122,8 +125,20 @@ class KeycloakUserManagementAdapter(
         user.lastName = lastName
 
         // Add phone number as attribute if provided
+        val attributes = mutableMapOf<String, List<String>>()
+
+        // Add phone number as attribute if provided
         if (!phone.isNullOrBlank()) {
-            user.attributes = mapOf("phoneNumber" to listOf(phone))
+            attributes["phoneNumber"] = listOf(phone)
+        }
+
+        // Add business_id as attribute if provided
+        if (!businessId.isNullOrBlank()) {
+            attributes["business_id"] = listOf(businessId)
+        }
+
+        if (attributes.isNotEmpty()) {
+            user.attributes = attributes
         }
 
         // Set password credential
