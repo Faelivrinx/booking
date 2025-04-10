@@ -1,7 +1,7 @@
-package com.dominikdev.booking.shared.infrastructure.keycloak
+package com.dominikdev.booking.shared.infrastructure.identity
 
 import com.dominikdev.booking.business.identity.BusinessDomainException
-import com.dominikdev.booking.clients.ClientDomainException
+import com.dominikdev.booking.clients.identity.ClientDomainException
 import com.dominikdev.booking.shared.exception.DomainException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.ws.rs.WebApplicationException
@@ -14,18 +14,13 @@ import org.springframework.stereotype.Component
 import java.util.Collections
 
 @Component
-class KeycloakUserManagementAdapter(
+class IdentityManagementService(
     private val keycloak: Keycloak,
     @Value("\${keycloak.realm}") private val realm: String
 ) {
 
     private val logger = KotlinLogging.logger {}
 
-    // User role constants
-    companion object {
-        const val ROLE_BUSINESS = "BUSINESS"
-        const val ROLE_CLIENT = "CLIENT"
-    }
 
     fun createBusinessUser(
         email: String,
@@ -34,7 +29,7 @@ class KeycloakUserManagementAdapter(
         password: String,
         businessId: String
     ): String {
-        return createUser(email, name, phone, password, ROLE_BUSINESS, businessId, ::BusinessDomainException)
+        return createUser(email, name, phone, password, UserRole.BUSINESS_OWNER.name, businessId, ::BusinessDomainException)
     }
 
     fun createClientUser(
@@ -43,7 +38,7 @@ class KeycloakUserManagementAdapter(
         phone: String?,
         password: String
     ): String {
-        return createUser(email, name, phone, password, ROLE_CLIENT, null, ::ClientDomainException)
+        return createUser(email, name, phone, password, UserRole.CLIENT.name, null, ::ClientDomainException)
     }
 
     fun deleteUser(userId: String) {

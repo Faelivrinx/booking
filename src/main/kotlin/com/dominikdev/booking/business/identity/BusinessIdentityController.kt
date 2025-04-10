@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/businesses")
+@RequestMapping("/identity/businesses")
 class BusinessIdentityController(private val businessAccountFacade: BusinessIdentityFacade) {
 
     @PostMapping

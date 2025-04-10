@@ -1,4 +1,4 @@
-package com.dominikdev.booking.clients
+package com.dominikdev.booking.clients.identity
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service

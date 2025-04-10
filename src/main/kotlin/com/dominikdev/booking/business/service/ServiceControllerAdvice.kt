@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
 import java.time.LocalDateTime
 
-@RestControllerAdvice(basePackages = ["com.dominikdev.booking.services"])
+@RestControllerAdvice(basePackages = ["com.dominikdev.booking.business.service"])
 class ServiceControllerAdvice {
 
     private val logger = KotlinLogging.logger {}

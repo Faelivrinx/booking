@@ -1,4 +1,4 @@
-package com.dominikdev.booking.clients
+package com.dominikdev.booking.clients.identity
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,31 +14,31 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @RestController
-@RequestMapping("/clients")
+@RequestMapping("/identity/clients")
 @CrossOrigin(value = ["*"])
-class ClientController(private val clientService: ClientService) {
+class ClientIdentityController(private val clientIdentityService: ClientIdentityService) {
 
-    @PostMapping("/register")
+    @PostMapping
     fun registerClient(@RequestBody request: RegisterClientRequest): ResponseEntity<RegistrationResponse> {
-        val registrationResponse = clientService.registerClient(request)
+        val registrationResponse = clientIdentityService.registerClient(request)
         return ResponseEntity(registrationResponse, HttpStatus.CREATED)
     }
 
     @PostMapping("/activate")
     fun activateClient(@RequestBody request: ActivateClientRequest): ResponseEntity<ClientResponse> {
-        val client = clientService.activateClient(request)
+        val client = clientIdentityService.activateClient(request)
         return ResponseEntity(client, HttpStatus.OK)
     }
 
     @PostMapping("/resend-code")
     fun resendVerificationCode(@RequestBody request: ResendVerificationCodeRequest): ResponseEntity<Map<String, Boolean>> {
-        val result = clientService.regenerateVerificationCode(request)
+        val result = clientIdentityService.regenerateVerificationCode(request)
         return ResponseEntity(mapOf("sent" to result), HttpStatus.OK)
     }
 
     @GetMapping("/{clientId}")
     fun getClientById(@PathVariable clientId: String): ResponseEntity<ClientResponse> {
-        val client = clientService.getClientById(UUID.fromString(clientId))
+        val client = clientIdentityService.getClientById(UUID.fromString(clientId))
         return ResponseEntity.ok(client)
     }
 
@@ -47,7 +47,7 @@ class ClientController(private val clientService: ClientService) {
         @PathVariable clientId: String,
         @RequestBody request: UpdateClientProfileRequest
     ): ResponseEntity<ClientResponse> {
-        val client = clientService.updateClientProfile(UUID.fromString(clientId), request)
+        val client = clientIdentityService.updateClientProfile(UUID.fromString(clientId), request)
         return ResponseEntity.ok(client)
     }
 }

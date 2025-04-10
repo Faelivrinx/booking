@@ -1,6 +1,6 @@
 package com.dominikdev.booking.business.identity
 
-import com.dominikdev.booking.shared.infrastructure.keycloak.KeycloakUserManagementAdapter
+import com.dominikdev.booking.shared.infrastructure.identity.IdentityManagementService
 import com.dominikdev.booking.shared.values.Email
 import com.dominikdev.booking.shared.values.Name
 import com.dominikdev.booking.shared.values.PhoneNumber
@@ -12,7 +12,7 @@ import java.util.UUID
 @Service
 class BusinessIdentityApplicationService(
     private val businessRepository: BusinessIdentityJpaRepository,
-    private val userManagementPort: KeycloakUserManagementAdapter
+    private val userManagementPort: IdentityManagementService
 ) {
     private val logger = KotlinLogging.logger {}
 

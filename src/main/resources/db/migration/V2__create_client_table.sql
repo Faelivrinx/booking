@@ -1,4 +1,4 @@
-CREATE TABLE clients (
+CREATE TABLE clients_identity (
     id UUID PRIMARY KEY,
     keycloak_id VARCHAR(255) UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -13,10 +13,10 @@ CREATE TABLE clients (
 );
 
 -- Create index on email for faster lookups
-CREATE INDEX idx_client_email ON clients(email);
+CREATE INDEX idx_client_email ON clients_identity(email);
 
 -- Create index on phone_number for faster lookups
-CREATE INDEX idx_client_phone_number ON clients(phone_number);
+CREATE INDEX idx_client_phone_number ON clients_identity(phone_number);
 
 -- Create index on keycloak_id for faster lookups
-CREATE INDEX idx_client_keycloak_id ON clients(keycloak_id);
+CREATE INDEX idx_client_keycloak_id ON clients_identity(keycloak_id);

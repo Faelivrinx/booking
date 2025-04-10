@@ -101,13 +101,13 @@ if [ -z "$CLIENT_SECRET" ]; then
       -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.value')
 fi
 
-# Create BUSINESS role
-echo -e "${YELLOW}Creating BUSINESS role...${NC}"
+# Create BUSINESS_OWNER role
+echo -e "${YELLOW}Creating BUSINESS_OWNER role...${NC}"
 curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/roles \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "BUSINESS",
+    "name": "BUSINESS_OWNER",
     "description": "Role for business owners"
   }' || echo -e "${YELLOW}Role may already exist${NC}"
 

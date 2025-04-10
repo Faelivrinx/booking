@@ -1,7 +1,7 @@
-package com.dominikdev.booking.clients
+package com.dominikdev.booking.clients.identity
 
 import com.dominikdev.booking.shared.infrastructure.event.DomainEventPublisher
-import com.dominikdev.booking.shared.infrastructure.keycloak.KeycloakUserManagementAdapter
+import com.dominikdev.booking.shared.infrastructure.identity.IdentityManagementService
 import com.dominikdev.booking.shared.values.Email
 import com.dominikdev.booking.shared.values.PhoneNumber
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -11,10 +11,10 @@ import java.util.UUID
 import kotlin.random.Random
 
 @Service
-class ClientService(
-    private val clientRepository: ClientRepository,
+class ClientIdentityService(
+    private val clientIdentityRepository: ClientIdentityRepository,
     private val smsService: SmsService,
-    private val keycloakAdapter: KeycloakUserManagementAdapter,
+    private val keycloakAdapter: IdentityManagementService,
     private val eventPublisher: DomainEventPublisher
 ) {
     private val logger = KotlinLogging.logger {}
@@ -24,13 +24,13 @@ class ClientService(
         val email = Email.of(request.email)
         val phoneNumber = PhoneNumber.of(request.phoneNumber)
 
-        clientRepository.findByEmail(email.value)?.let {
+        clientIdentityRepository.findByEmail(email.value)?.let {
             if (it.isVerified()) {
                 throw ClientDomainException("Client with email ${request.email} already exists")
             } else {
                 val newCode = generateVerificationCode()
                 it.regenerateVerificationCode(newCode)
-                val savedClient = clientRepository.save(it)
+                val savedClient = clientIdentityRepository.save(it)
 
                 publishEvents(it)
 
@@ -46,7 +46,7 @@ class ClientService(
             }
         }
 
-        clientRepository.findByPhoneNumber(phoneNumber.value)?.let {
+        clientIdentityRepository.findByPhoneNumber(phoneNumber.value)?.let {
             if (it.isVerified()) {
                 throw ClientDomainException("Phone number ${request.phoneNumber} already in use")
             }
@@ -54,7 +54,7 @@ class ClientService(
 
         val verificationCode = generateVerificationCode()
 
-        val client = Client.register(
+        val clientIdentity = ClientIdentity.register(
             email = email,
             phoneNumber = phoneNumber,
             firstName = request.firstName,
@@ -62,9 +62,9 @@ class ClientService(
             verificationCode = verificationCode
         )
 
-        val savedClient = clientRepository.save(client)
+        val savedClient = clientIdentityRepository.save(clientIdentity)
 
-        publishEvents(client)
+        publishEvents(clientIdentity)
 
         sendVerificationSms(phoneNumber.value, verificationCode)
 
@@ -81,7 +81,7 @@ class ClientService(
     fun activateClient(request: ActivateClientRequest): ClientResponse {
         val email = Email.of(request.email)
 
-        val client = clientRepository.findByEmail(email.value)
+        val client = clientIdentityRepository.findByEmail(email.value)
             ?: throw ClientDomainException("No registration found for email ${request.email}")
 
         if (client.isVerified()) {
@@ -107,7 +107,7 @@ class ClientService(
                 throw ClientDomainException("Invalid verification code")
             }
 
-            val savedClient = clientRepository.save(client)
+            val savedClient = clientIdentityRepository.save(client)
 
             publishEvents(client)
 
@@ -125,7 +125,7 @@ class ClientService(
     fun regenerateVerificationCode(request: ResendVerificationCodeRequest): Boolean {
         val email = Email.of(request.email)
 
-        val client = clientRepository.findByEmail(email.value)
+        val client = clientIdentityRepository.findByEmail(email.value)
             ?: throw ClientDomainException("No registration found for email ${request.email}")
 
         if (client.isVerified()) {
@@ -135,7 +135,7 @@ class ClientService(
         val newCode = generateVerificationCode()
         client.regenerateVerificationCode(newCode)
 
-        clientRepository.save(client)
+        clientIdentityRepository.save(client)
 
         publishEvents(client)
 
@@ -144,7 +144,7 @@ class ClientService(
 
     @Transactional
     fun updateClientProfile(clientId: UUID, request: UpdateClientProfileRequest): ClientResponse {
-        val client = clientRepository.findById(clientId)
+        val client = clientIdentityRepository.findById(clientId)
             .orElseThrow { ClientDomainException("Client not found for id: $clientId") }
 
         if (!client.isVerified()) {
@@ -159,14 +159,14 @@ class ClientService(
             phoneNumber = phoneNumber
         )
 
-        val updatedClient = clientRepository.save(client)
+        val updatedClient = clientIdentityRepository.save(client)
 
         return mapToResponse(updatedClient)
     }
 
     @Transactional(readOnly = true)
     fun getClientById(clientId: UUID): ClientResponse {
-        val client = clientRepository.findById(clientId)
+        val client = clientIdentityRepository.findById(clientId)
             .orElseThrow { ClientDomainException("Client not found for id: $clientId") }
 
         return mapToResponse(client)
@@ -174,7 +174,7 @@ class ClientService(
 
     @Transactional(readOnly = true)
     fun getClientByEmail(email: String): ClientResponse {
-        val client = clientRepository.findByEmail(email)
+        val client = clientIdentityRepository.findByEmail(email)
             ?: throw ClientDomainException("Client not found for email: $email")
 
         return mapToResponse(client)
@@ -182,21 +182,21 @@ class ClientService(
 
     @Transactional(readOnly = true)
     fun getClientByKeycloakId(keycloakId: String): ClientResponse {
-        val client = clientRepository.findByKeycloakId(keycloakId)
+        val client = clientIdentityRepository.findByKeycloakId(keycloakId)
             ?: throw ClientDomainException("Client not found for keycloakId: $keycloakId")
 
         return mapToResponse(client)
     }
 
-    private fun mapToResponse(client: Client): ClientResponse {
+    private fun mapToResponse(clientIdentity: ClientIdentity): ClientResponse {
         return ClientResponse(
-            id = client.id,
-            email = client.getEmail(),
-            phoneNumber = client.getPhoneNumber(),
-            firstName = client.getFirstName(),
-            lastName = client.getLastName(),
-            verified = client.isVerified(),
-            createdAt = client.createdAt
+            id = clientIdentity.id,
+            email = clientIdentity.getEmail(),
+            phoneNumber = clientIdentity.getPhoneNumber(),
+            firstName = clientIdentity.getFirstName(),
+            lastName = clientIdentity.getLastName(),
+            verified = clientIdentity.isVerified(),
+            createdAt = clientIdentity.createdAt
         )
     }
 
@@ -219,11 +219,11 @@ class ClientService(
         }
     }
 
-    private fun publishEvents(client: Client) {
-        val events = client.getEvents()
+    private fun publishEvents(clientIdentity: ClientIdentity) {
+        val events = clientIdentity.getEvents()
         if (events.isNotEmpty()) {
             eventPublisher.publishAll(events)
-            client.clearEvents()
+            clientIdentity.clearEvents()
         }
     }
 }

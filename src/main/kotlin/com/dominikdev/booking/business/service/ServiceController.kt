@@ -16,7 +16,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/businesses/{businessId}/services")
-@PreAuthorize("hasRole('BUSINESS')")
+@PreAuthorize("hasRole('BUSINESS_OWNER')")
 class ServiceController(
     private val serviceManager: ServiceManager
 ) {

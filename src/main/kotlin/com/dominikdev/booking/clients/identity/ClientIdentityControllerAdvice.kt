@@ -1,4 +1,4 @@
-package com.dominikdev.booking.clients
+package com.dominikdev.booking.clients.identity
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.HttpStatus
@@ -11,8 +11,8 @@ import java.time.LocalDateTime
 /**
  * Controller advice for handling client-related exceptions
  */
-@RestControllerAdvice(basePackages = ["com.dominikdev.booking.clients"])
-class ClientControllerAdvice {
+@RestControllerAdvice(basePackages = ["com.dominikdev.booking.clients.identity"])
+class ClientIdentityControllerAdvice {
 
     private val logger = KotlinLogging.logger {}
 

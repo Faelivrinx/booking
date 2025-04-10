@@ -1,4 +1,4 @@
-package com.dominikdev.booking.clients
+package com.dominikdev.booking.clients.identity
 
 import com.dominikdev.booking.shared.event.DomainEvent
 import com.dominikdev.booking.shared.values.Email
@@ -11,8 +11,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
-@Table(name = "clients")
-class Client(
+@Table(name = "clients_identity")
+class ClientIdentity(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -56,8 +56,8 @@ class Client(
             firstName: String,
             lastName: String,
             verificationCode: String
-        ): Client {
-            val client = Client(
+        ): ClientIdentity {
+            val clientIdentity = ClientIdentity(
                 email = email.value,
                 phoneNumber = phoneNumber.value,
                 firstName = firstName,
@@ -66,15 +66,15 @@ class Client(
                 verificationCodeExpiry = LocalDateTime.now().plusHours(24)
             )
 
-            client.registerEvent(
+            clientIdentity.registerEvent(
                 ClientRegisteredEvent(
-                    clientId = client.id,
-                    email = client.email,
-                    phoneNumber = client.phoneNumber
+                    clientId = clientIdentity.id,
+                    email = clientIdentity.email,
+                    phoneNumber = clientIdentity.phoneNumber
                 )
             )
 
-            return client
+            return clientIdentity
         }
     }
 
