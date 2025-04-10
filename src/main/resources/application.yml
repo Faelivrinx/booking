@@ -77,7 +77,7 @@ keycloak:
   public-client: false
   bearer-only: true
   credentials:
-    secret: ${KEYCLOAK_CLIENT_SECRET:change-me-in-production}
+    secret: ${KEYCLOAK_CLIENT_SECRET:1Aq2hvKwwCqyfnDYEjzjDDzh7EkRdPLl}
   ssl-required: ${KEYCLOAK_SSL_REQUIRED:external}
   use-resource-role-mappings: true
   # Admin credentials for Keycloak Admin Client

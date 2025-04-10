@@ -12,6 +12,7 @@ import org.keycloak.representations.idm.UserRepresentation
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.Collections
+import java.util.UUID
 
 @Component
 class IdentityManagementService(
@@ -27,7 +28,7 @@ class IdentityManagementService(
         name: String,
         phone: String?,
         password: String,
-        businessId: String
+        businessId: UUID
     ): String {
         return createUser(email, name, phone, password, UserRole.BUSINESS_OWNER.name, businessId, ::BusinessDomainException)
     }
@@ -67,7 +68,7 @@ class IdentityManagementService(
         phone: String?,
         password: String,
         role: String,
-        businessId: String?,
+        businessId: UUID?,
         exceptionFactory: (String, Throwable?) -> T
     ): String {
         try {
@@ -105,7 +106,7 @@ class IdentityManagementService(
         name: String,
         phone: String?,
         password: String,
-        businessId: String?
+        businessId: UUID?
     ): UserRepresentation {
         val nameParts = name.split(" ", limit = 2)
         val firstName = nameParts[0]
@@ -127,8 +128,8 @@ class IdentityManagementService(
         }
 
         // Add business_id as attribute if provided
-        if (!businessId.isNullOrBlank()) {
-            attributes["business_id"] = listOf(businessId)
+        if (businessId != null) {
+            attributes["business_id"] = listOf(businessId.toString())
         }
 
         if (attributes.isNotEmpty()) {

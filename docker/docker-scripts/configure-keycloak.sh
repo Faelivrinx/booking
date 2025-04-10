@@ -121,10 +121,92 @@ curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/roles \
     "description": "Role for clients/customers"
   }' || echo -e "${YELLOW}Role may already exist${NC}"
 
+# Create admin role
+echo -e "${YELLOW}Creating admin role...${NC}"
+curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/roles \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "ADMIN",
+    "description": "Administrator role with full privileges"
+  }' || echo -e "${YELLOW}Admin role may already exist${NC}"
+
+# Create admin user
+echo -e "${YELLOW}Creating admin user...${NC}"
+ADMIN_USER_ID=$(curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/users \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "email": "admin@example.com",
+    "firstName": "Admin",
+    "lastName": "User",
+    "enabled": true,
+    "emailVerified": true,
+    "credentials": [
+      {
+        "type": "password",
+        "value": "admin",
+        "temporary": false
+      }
+    ]
+  }' -v 2>&1 | grep "Location" | sed -n 's/.*\/users\/\([^"]*\).*/\1/p' | tr -d '\r')
+
+# If admin user already exists, find its ID
+if [ -z "$ADMIN_USER_ID" ]; then
+    echo -e "${YELLOW}Admin user may already exist, fetching ID...${NC}"
+    ADMIN_USER_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/users \
+      -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.username=="admin") | .id')
+fi
+
+if [ -z "$ADMIN_USER_ID" ]; then
+    echo -e "${RED}Failed to create or find admin user${NC}"
+    exit 1
+fi
+
+# Get admin role ID
+ADMIN_ROLE_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/roles \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.name=="ADMIN") | .id')
+
+if [ -z "$ADMIN_ROLE_ID" ]; then
+    echo -e "${RED}Failed to find admin role${NC}"
+    exit 1
+fi
+
+# Get BUSINESS_OWNER role ID
+BUSINESS_OWNER_ROLE_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/roles \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.name=="BUSINESS_OWNER") | .id')
+
+if [ -z "$BUSINESS_OWNER_ROLE_ID" ]; then
+    echo -e "${RED}Failed to find BUSINESS_OWNER role${NC}"
+    exit 1
+fi
+
+# Assign admin role to admin user
+echo -e "${YELLOW}Assigning admin roles to admin user...${NC}"
+curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/users/$ADMIN_USER_ID/role-mappings/realm \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "[
+    {
+      \"id\": \"$ADMIN_ROLE_ID\",
+      \"name\": \"ADMIN\"
+    },
+    {
+      \"id\": \"$BUSINESS_OWNER_ROLE_ID\",
+      \"name\": \"BUSINESS_OWNER\"
+    }
+  ]"
+
 echo -e "${GREEN}Keycloak configuration completed:${NC}"
 echo -e "  Realm: appointment-realm"
 echo -e "  Client ID: appointment-client"
 echo -e "  Client Secret: ${CLIENT_SECRET}"
+echo -e ""
+echo -e "${YELLOW}Admin user created:${NC}"
+echo -e "  Username: admin"
+echo -e "  Password: admin"
+echo -e "  Email: admin@example.com"
 echo -e ""
 echo -e "${YELLOW}Update your application.yml with these values${NC}"
 echo -e "${YELLOW}Or use these environment variables:${NC}"

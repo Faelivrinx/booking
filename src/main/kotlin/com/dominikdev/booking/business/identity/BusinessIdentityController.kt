@@ -20,7 +20,8 @@ class BusinessIdentityController(private val businessAccountFacade: BusinessIden
             name = request.name,
             email = request.email,
             phoneNumber = request.phoneNumber,
-            initialPassword = request.password
+            initialPassword = request.password,
+            businessId = request.businessId
         )
 
         val business = businessAccountFacade.createBusinessIdentity(command)
@@ -46,7 +47,8 @@ class BusinessIdentityController(private val businessAccountFacade: BusinessIden
         val name: String,
         val email: String,
         val phoneNumber: String?,
-        val password: String
+        val password: String,
+        val businessId: UUID
     )
 
     data class UpdateBusinessRequest(

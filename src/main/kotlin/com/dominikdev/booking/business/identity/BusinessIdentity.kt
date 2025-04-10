@@ -19,6 +19,9 @@ class BusinessIdentity(
     @Column(name = "keycloak_id", nullable = false, unique = true)
     var keycloakId: String,
 
+    @Column(name = "business_id", nullable = false, unique = true)
+    var businessId: UUID,
+
     @Column(nullable = false)
     var name: String,
 
@@ -48,6 +51,7 @@ class BusinessIdentity(
     companion object {
         fun create(
             keycloakId: String,
+            businessId: UUID,
             name: Name,
             email: Email,
             phoneNumber: PhoneNumber?,
@@ -57,6 +61,7 @@ class BusinessIdentity(
             val businessIdentity = BusinessIdentity(
                 id = id.value,
                 keycloakId = keycloakId,
+                businessId = businessId,
                 name = name.value,
                 email = email.value,
                 phoneNumber = phoneNumber?.value,
@@ -70,6 +75,7 @@ class BusinessIdentity(
         fun reconstitute(
             id: BusinessIdentityId,
             keycloakId: String,
+            businessId: UUID,
             name: String,
             email: String,
             phoneNumber: String?,
@@ -79,6 +85,7 @@ class BusinessIdentity(
             return BusinessIdentity(
                 id = id.value,
                 keycloakId = keycloakId,
+                businessId = businessId,
                 name = name,
                 email = email,
                 phoneNumber = phoneNumber,

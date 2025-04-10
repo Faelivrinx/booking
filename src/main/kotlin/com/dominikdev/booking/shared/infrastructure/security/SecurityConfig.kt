@@ -36,9 +36,8 @@ class SecurityConfig(
             .cors { it.configurationSource(corsConfigurationSource()) }
             .authorizeHttpRequests { authorize ->
                 authorize
-                    .requestMatchers("/businesses", "/clients/register", "/clients/activate", "/clients/resend-code").permitAll()
+                    .requestMatchers("/clients/register", "/clients/activate", "/clients/resend-code").permitAll()
                     // Alternative business path (if using context path properly)
-                    .requestMatchers("/businesses").permitAll()
                     // actuator should be public
                     .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()

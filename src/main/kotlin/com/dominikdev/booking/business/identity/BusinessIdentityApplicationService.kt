@@ -23,7 +23,7 @@ class BusinessIdentityApplicationService(
             throw BusinessDomainException("Business with email ${command.email} already exists")
         }
 
-        // Generate a business ID first
+        // Generate a business identity ID
         val businessIdentityId = BusinessIdentityId.generate()
 
         // Create the Keycloak user with the business ID
@@ -33,33 +33,25 @@ class BusinessIdentityApplicationService(
                 name = command.name,
                 phone = command.phoneNumber,
                 password = command.initialPassword,
-                businessId = businessIdentityId.toString()
+                businessId = command.businessId
             )
         } catch (e: Exception) {
             logger.error(e) { "Failed to create Keycloak user for business: ${e.message}" }
             throw e
         }
 
-        // Create business with the generated ID and Keycloak ID
+        // Create business identity with the Keycloak ID and business ID
         val businessIdentity = BusinessIdentity.create(
             id = businessIdentityId,
             keycloakId = userId,
             name = Name.of(command.name),
             email = email,
-            phoneNumber = PhoneNumber.ofNullable(command.phoneNumber)
+            phoneNumber = PhoneNumber.ofNullable(command.phoneNumber),
+            businessId = command.businessId
         )
 
-        try {
-            val savedBusiness = businessRepository.save(businessIdentity)
-            return mapToDTO(savedBusiness)
-        } catch (e: Exception) {
-            try {
-                userManagementPort.deleteUser(userId)
-            } catch (ex: Exception) {
-                logger.error(ex) { "Failed to delete user $userId after business creation failure" }
-            }
-            throw e
-        }
+        val savedBusinessIdentity = businessRepository.save(businessIdentity)
+        return mapToDTO(savedBusinessIdentity)
     }
 
     @Transactional(readOnly = true)
