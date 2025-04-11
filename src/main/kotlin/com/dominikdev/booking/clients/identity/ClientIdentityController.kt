@@ -15,7 +15,6 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/identity/clients")
-@CrossOrigin(value = ["*"])
 class ClientIdentityController(private val clientIdentityService: ClientIdentityService) {
 
     @PostMapping

@@ -1,8 +1,8 @@
 package com.dominikdev.booking.business.service
 
+import com.dominikdev.booking.shared.infrastructure.security.BusinessOwnerSecurity
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -16,7 +16,6 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/businesses/{businessId}/services")
-@PreAuthorize("hasRole('BUSINESS_OWNER')")
 class ServiceController(
     private val serviceManager: ServiceManager
 ) {
@@ -49,6 +48,7 @@ class ServiceController(
      * Add a new service
      */
     @PostMapping
+    @BusinessOwnerSecurity
     fun addService(
         @PathVariable businessId: String,
         @RequestBody request: ServiceRequest
@@ -67,6 +67,7 @@ class ServiceController(
     /**
      * Update an existing service
      */
+    @BusinessOwnerSecurity
     @PutMapping("/{serviceId}")
     fun updateService(
         @PathVariable businessId: String,
@@ -89,6 +90,7 @@ class ServiceController(
      * Delete a service
      */
     @DeleteMapping("/{serviceId}")
+    @BusinessOwnerSecurity
     fun deleteService(
         @PathVariable businessId: String,
         @PathVariable serviceId: String

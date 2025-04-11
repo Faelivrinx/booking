@@ -4,7 +4,7 @@
 KEYCLOAK_URL="http://localhost:8080"
 REALM="appointment-realm"
 CLIENT_ID="appointment-client"
-CLIENT_SECRET="1Aq2hvKwwCqyfnDYEjzjDDzh7EkRdPLl" # Replace with your actual client secret
+CLIENT_SECRET="V5J07sKjJ2v8vx3CrJa4zO6XT8DHyCxa" # Replace with your actual client secret
 USERNAME="admin"
 PASSWORD="admin"
 

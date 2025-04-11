@@ -35,7 +35,7 @@ CREATE INDEX idx_business_keycloak_id ON businesses_identity(keycloak_id);
 -- Business services
 CREATE TABLE services (
     id UUID PRIMARY KEY,
-    business_id UUID NOT NULL REFERENCES businesses_identity(id) ON DELETE CASCADE,
+    business_id UUID NOT NULL REFERENCES businesses_profile(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     duration_minutes INT NOT NULL,
     description VARCHAR(500),

@@ -12,9 +12,9 @@ echo -e "${YELLOW}Configuring Keycloak...${NC}"
 
 # Wait for Keycloak to start
 echo -e "${YELLOW}Waiting for Keycloak to start...${NC}"
-until curl -s http://localhost:8080/health/ready > /dev/null; do
-    echo -n "."
-    sleep 2
+until curl -s http://localhost:8080/health/ready >/dev/null; do
+  echo -n "."
+  sleep 2
 done
 echo -e "\n${GREEN}Keycloak is up and running${NC}"
 
@@ -28,8 +28,8 @@ ADMIN_TOKEN=$(curl -s -X POST http://localhost:8080/realms/master/protocol/openi
   -d "client_id=admin-cli" | jq -r '.access_token')
 
 if [ -z "$ADMIN_TOKEN" ]; then
-    echo -e "${RED}Failed to get admin token${NC}"
-    exit 1
+  echo -e "${RED}Failed to get admin token${NC}"
+  exit 1
 fi
 
 # Create realm
@@ -57,8 +57,8 @@ ADMIN_TOKEN=$(curl -s -X POST http://localhost:8080/realms/master/protocol/openi
   -d "grant_type=password" \
   -d "client_id=admin-cli" | jq -r '.access_token')
 
-# Create client
-echo -e "${YELLOW}Creating appointment-client...${NC}"
+# Create backend client
+echo -e "${YELLOW}Creating appointment-client (backend)...${NC}"
 CLIENT_ID=$(curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/clients \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -78,14 +78,14 @@ CLIENT_ID=$(curl -s -X POST http://localhost:8080/admin/realms/appointment-realm
 
 # If client already exists, find its ID
 if [ -z "$CLIENT_ID" ]; then
-    echo -e "${YELLOW}Client may already exist, fetching ID...${NC}"
-    CLIENT_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/clients \
-      -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.clientId=="appointment-client") | .id')
+  echo -e "${YELLOW}Client may already exist, fetching ID...${NC}"
+  CLIENT_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/clients \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.clientId=="appointment-client") | .id')
 fi
 
 if [ -z "$CLIENT_ID" ]; then
-    echo -e "${RED}Failed to create or find client${NC}"
-    exit 1
+  echo -e "${RED}Failed to create or find client${NC}"
+  exit 1
 fi
 
 # Get client secret
@@ -93,12 +93,82 @@ CLIENT_SECRET=$(curl -s http://localhost:8080/admin/realms/appointment-realm/cli
   -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.value')
 
 if [ -z "$CLIENT_SECRET" ]; then
-    echo -e "${YELLOW}Generating new client secret...${NC}"
-    curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/clients/$CLIENT_ID/client-secret \
-      -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null
+  echo -e "${YELLOW}Generating new client secret...${NC}"
+  curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/clients/$CLIENT_ID/client-secret \
+    -H "Authorization: Bearer $ADMIN_TOKEN" >/dev/null
 
-    CLIENT_SECRET=$(curl -s http://localhost:8080/admin/realms/appointment-realm/clients/$CLIENT_ID/client-secret \
-      -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.value')
+  CLIENT_SECRET=$(curl -s http://localhost:8080/admin/realms/appointment-realm/clients/$CLIENT_ID/client-secret \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.value')
+fi
+
+# Create frontend client
+echo -e "${YELLOW}Creating appointment-frontend client...${NC}"
+# First check if client already exists
+FRONTEND_CLIENT_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/clients \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.clientId=="appointment-frontend") | .id')
+
+if [ -z "$FRONTEND_CLIENT_ID" ]; then
+  # Client doesn't exist, create it
+  curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/clients \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "clientId": "appointment-frontend",
+        "enabled": true,
+        "publicClient": true,
+        "redirectUris": ["http://localhost:3000/*"],
+        "webOrigins": ["http://localhost:3000"],
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": false,
+        "authorizationServicesEnabled": false,
+        "protocol": "openid-connect",
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": false,
+        "rootUrl": "http://localhost:3000",
+        "baseUrl": "/",
+        "frontchannelLogout": true
+      }'
+
+  # Now get the newly created client ID
+  FRONTEND_CLIENT_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/clients \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.clientId=="appointment-frontend") | .id')
+fi
+
+if [ -z "$FRONTEND_CLIENT_ID" ]; then
+  echo -e "${RED}Failed to create or find frontend client${NC}"
+  exit 1
+else
+  echo -e "${GREEN}Frontend client ID: ${FRONTEND_CLIENT_ID}${NC}"
+fi
+
+# Add business_id attribute mapper to the frontend client
+echo -e "${YELLOW}Adding business_id mapper to frontend client...${NC}"
+# First check if mapper already exists
+MAPPER_EXISTS=$(curl -s http://localhost:8080/admin/realms/appointment-realm/clients/$FRONTEND_CLIENT_ID/protocol-mappers/models \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.name=="business_id") | .id')
+
+if [ -z "$MAPPER_EXISTS" ]; then
+  echo -e "${YELLOW}Creating business_id mapper...${NC}"
+  curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/clients/$FRONTEND_CLIENT_ID/protocol-mappers/models \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "business_id",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-attribute-mapper",
+        "consentRequired": false,
+        "config": {
+          "userinfo.token.claim": "true",
+          "user.attribute": "business_id",
+          "id.token.claim": "true",
+          "access.token.claim": "true",
+          "claim.name": "business_id",
+          "jsonType.label": "String"
+        }
+      }'
+  echo -e "${GREEN}Mapper created${NC}"
+else
+  echo -e "${GREEN}business_id mapper already exists${NC}"
 fi
 
 # Create BUSINESS_OWNER role
@@ -154,14 +224,14 @@ ADMIN_USER_ID=$(curl -s -X POST http://localhost:8080/admin/realms/appointment-r
 
 # If admin user already exists, find its ID
 if [ -z "$ADMIN_USER_ID" ]; then
-    echo -e "${YELLOW}Admin user may already exist, fetching ID...${NC}"
-    ADMIN_USER_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/users \
-      -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.username=="admin") | .id')
+  echo -e "${YELLOW}Admin user may already exist, fetching ID...${NC}"
+  ADMIN_USER_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/users \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.username=="admin") | .id')
 fi
 
 if [ -z "$ADMIN_USER_ID" ]; then
-    echo -e "${RED}Failed to create or find admin user${NC}"
-    exit 1
+  echo -e "${RED}Failed to create or find admin user${NC}"
+  exit 1
 fi
 
 # Get admin role ID
@@ -169,8 +239,8 @@ ADMIN_ROLE_ID=$(curl -s http://localhost:8080/admin/realms/appointment-realm/rol
   -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.name=="ADMIN") | .id')
 
 if [ -z "$ADMIN_ROLE_ID" ]; then
-    echo -e "${RED}Failed to find admin role${NC}"
-    exit 1
+  echo -e "${RED}Failed to find admin role${NC}"
+  exit 1
 fi
 
 # Get BUSINESS_OWNER role ID
@@ -178,8 +248,8 @@ BUSINESS_OWNER_ROLE_ID=$(curl -s http://localhost:8080/admin/realms/appointment-
   -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.name=="BUSINESS_OWNER") | .id')
 
 if [ -z "$BUSINESS_OWNER_ROLE_ID" ]; then
-    echo -e "${RED}Failed to find BUSINESS_OWNER role${NC}"
-    exit 1
+  echo -e "${RED}Failed to find BUSINESS_OWNER role${NC}"
+  exit 1
 fi
 
 # Assign admin role to admin user
@@ -200,8 +270,9 @@ curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/users/$ADMI
 
 echo -e "${GREEN}Keycloak configuration completed:${NC}"
 echo -e "  Realm: appointment-realm"
-echo -e "  Client ID: appointment-client"
-echo -e "  Client Secret: ${CLIENT_SECRET}"
+echo -e "  Backend Client ID: appointment-client"
+echo -e "  Backend Client Secret: ${CLIENT_SECRET}"
+echo -e "  Frontend Client ID: appointment-frontend"
 echo -e ""
 echo -e "${YELLOW}Admin user created:${NC}"
 echo -e "  Username: admin"
@@ -216,4 +287,4 @@ echo -e "  KEYCLOAK_CLIENT_ID=appointment-client"
 echo -e "  KEYCLOAK_CLIENT_SECRET=${CLIENT_SECRET}"
 echo -e "  KEYCLOAK_ADMIN_USERNAME=admin"
 echo -e "  KEYCLOAK_ADMIN_PASSWORD=admin"
-echo -e "  SERVER_PORT=8081"
+echo -e "  SERVER_PORT=8081"s
