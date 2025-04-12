@@ -17,7 +17,7 @@ import java.util.UUID
 @RequestMapping("/identity/clients")
 class ClientIdentityController(private val clientIdentityService: ClientIdentityService) {
 
-    @PostMapping
+    @PostMapping("/register")
     fun registerClient(@RequestBody request: RegisterClientRequest): ResponseEntity<RegistrationResponse> {
         val registrationResponse = clientIdentityService.registerClient(request)
         return ResponseEntity(registrationResponse, HttpStatus.CREATED)
@@ -33,21 +33,6 @@ class ClientIdentityController(private val clientIdentityService: ClientIdentity
     fun resendVerificationCode(@RequestBody request: ResendVerificationCodeRequest): ResponseEntity<Map<String, Boolean>> {
         val result = clientIdentityService.regenerateVerificationCode(request)
         return ResponseEntity(mapOf("sent" to result), HttpStatus.OK)
-    }
-
-    @GetMapping("/{clientId}")
-    fun getClientById(@PathVariable clientId: String): ResponseEntity<ClientResponse> {
-        val client = clientIdentityService.getClientById(UUID.fromString(clientId))
-        return ResponseEntity.ok(client)
-    }
-
-    @PutMapping("/{clientId}")
-    fun updateClientProfile(
-        @PathVariable clientId: String,
-        @RequestBody request: UpdateClientProfileRequest
-    ): ResponseEntity<ClientResponse> {
-        val client = clientIdentityService.updateClientProfile(UUID.fromString(clientId), request)
-        return ResponseEntity.ok(client)
     }
 }
 
