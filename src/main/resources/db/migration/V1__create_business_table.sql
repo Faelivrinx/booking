@@ -73,3 +73,30 @@ CREATE INDEX idx_client_phone_number ON clients_identity(phone_number);
 
 -- Create index on keycloak_id for faster lookups
 CREATE INDEX idx_client_keycloak_id ON clients_identity(keycloak_id);
+
+-- Staff management table
+CREATE TABLE business_staff_members (
+    id UUID PRIMARY KEY,
+    business_id UUID NOT NULL REFERENCES businesses_profile(id) ON DELETE CASCADE,
+    keycloak_id VARCHAR(255) UNIQUE,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    phone_number VARCHAR(20),
+    job_title VARCHAR(255),
+    active BOOLEAN NOT NULL DEFAULT FALSE,
+    activated_at TIMESTAMP,
+    invitation_sent BOOLEAN NOT NULL DEFAULT FALSE,
+    invitation_date TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+-- Create index on business_id for faster lookups
+CREATE INDEX idx_staff_business_id ON business_staff_members(business_id);
+
+-- Create index on email for faster lookups
+CREATE INDEX idx_staff_email ON business_staff_members(email);
+
+-- Create index on keycloak_id for faster lookups
+CREATE INDEX idx_staff_keycloak_id ON business_staff_members(keycloak_id);

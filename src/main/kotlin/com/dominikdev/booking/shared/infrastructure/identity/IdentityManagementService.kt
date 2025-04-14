@@ -1,6 +1,7 @@
 package com.dominikdev.booking.shared.infrastructure.identity
 
 import com.dominikdev.booking.business.identity.BusinessDomainException
+import com.dominikdev.booking.business.staff.StaffDomainException
 import com.dominikdev.booking.clients.identity.ClientDomainException
 import com.dominikdev.booking.shared.exception.DomainException
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -40,6 +41,24 @@ class IdentityManagementService(
         password: String
     ): String {
         return createUser(email, name, phone, password, UserRole.CLIENT.name, null, ::ClientDomainException)
+    }
+
+    fun createStaffMember(
+        email: String,
+        name: String,
+        phone: String?,
+        password: String,
+        businessId: UUID
+    ): String {
+        return createUser(
+            email = email,
+            name = name,
+            phone = phone,
+            password = password,
+            role = UserRole.STAFF_MEMBER.name,
+            businessId = businessId,
+            exceptionFactory = ::StaffDomainException
+        )
     }
 
     fun deleteUser(userId: String) {

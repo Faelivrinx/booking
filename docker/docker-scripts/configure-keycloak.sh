@@ -201,6 +201,17 @@ curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/roles \
     "description": "Administrator role with full privileges"
   }' || echo -e "${YELLOW}Admin role may already exist${NC}"
 
+# Create STAFF_MEMBER role
+echo -e "${YELLOW}Creating STAFF_MEMBER role...${NC}"
+curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/roles \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "STAFF_MEMBER",
+    "description": "Role for staff members of businesses"
+  }' || echo -e "${YELLOW}Role may already exist${NC}"
+
+
 # Create admin user
 echo -e "${YELLOW}Creating admin user...${NC}"
 ADMIN_USER_ID=$(curl -s -X POST http://localhost:8080/admin/realms/appointment-realm/users \
