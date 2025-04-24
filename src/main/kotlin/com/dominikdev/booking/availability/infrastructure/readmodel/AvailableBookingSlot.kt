@@ -1,19 +1,11 @@
-package com.dominikdev.booking.appointment.infrastructure.readmodel
+package com.dominikdev.booking.availability.infrastructure.readmodel
 
+import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.Index
-import jakarta.persistence.Table
 
-/**
- * Read model entity for available booking slots
- * This is optimized for quick lookups of available appointment times
- */
 @Entity
 @Table(
     name = "available_booking_slots",

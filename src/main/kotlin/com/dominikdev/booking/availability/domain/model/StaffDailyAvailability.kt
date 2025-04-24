@@ -1,5 +1,4 @@
-package com.dominikdev.booking.appointment.domain.model
-
+package com.dominikdev.booking.availability.domain.model
 import com.dominikdev.booking.shared.event.DomainEvent
 import java.time.LocalDate
 import java.time.LocalTime
@@ -15,8 +14,14 @@ class StaffDailyAvailability(
     private val events = mutableListOf<DomainEvent>()
 
     fun setAvailability(timeSlots: List<TimeSlot>) {
-        this.timeSlots.forEach { removeTimeSlot(it) }
+        this.timeSlots.clear()
         timeSlots.forEach { addTimeSlot(it.startTime, it.endTime) }
+
+        events.add(StaffDailyAvailabilityUpdatedEvent(
+            staffId = staffId,
+            businessId = businessId,
+            date = date
+        ))
     }
 
     fun addTimeSlot(startTime: LocalTime, endTime: LocalTime) {
@@ -36,7 +41,7 @@ class StaffDailyAvailability(
         ))
     }
 
-    fun removeTimeSlot(timeSlot: TimeSlot) {
+    fun removeTimeSlot(timeSlot: TimeSlot): Boolean {
         val removed = timeSlots.removeIf {
             it.startTime == timeSlot.startTime && it.endTime == timeSlot.endTime
         }
@@ -48,9 +53,9 @@ class StaffDailyAvailability(
                 date = date
             ))
         }
+
+        return removed
     }
-
-
 
     fun getTimeSlots(): List<TimeSlot> = timeSlots.toList()
 
@@ -60,7 +65,6 @@ class StaffDailyAvailability(
 
     fun isAvailable(timeSlot: TimeSlot): Boolean {
         if (timeSlots.isEmpty()) return false
-
         return timeSlots.any { it.contains(timeSlot) }
     }
 
@@ -70,40 +74,6 @@ class StaffDailyAvailability(
 
     fun isEmpty(): Boolean = timeSlots.isEmpty()
 
-    /**
-     * Apply an appointment by splitting the affected time slot
-     * This ensures availability reflects booked appointments
-     * TODO: consider the naming to more general like `splitByTimeSlot`
-     */
-    fun applyAppointment(appointmentSlot: TimeSlot): Boolean {
-        // Find the affected time slot
-        val affectedSlotIndex = timeSlots.indexOfFirst { it.contains(appointmentSlot) }
-
-        if (affectedSlotIndex == -1) {
-            return false // No matching slot found
-        }
-
-        val affectedSlot = timeSlots[affectedSlotIndex]
-
-        // Remove the affected slot
-        timeSlots.removeAt(affectedSlotIndex)
-
-        // Add the split slots (before and after the appointment)
-        val splitSlots = affectedSlot.splitByAppointment(appointmentSlot)
-        timeSlots.addAll(splitSlots)
-
-        events.add(StaffDailyAvailabilityUpdatedEvent(
-            staffId = staffId,
-            businessId = businessId,
-            date = date
-        ))
-
-        return true
-    }
-
-    /**
-     * Get and clear domain events
-     */
     fun getEvents(): List<DomainEvent> = events.toList()
 
     fun clearEvents() {
