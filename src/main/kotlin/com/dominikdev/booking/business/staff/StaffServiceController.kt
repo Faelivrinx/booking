@@ -1,6 +1,8 @@
 package com.dominikdev.booking.business.staff
 
 import com.dominikdev.booking.shared.infrastructure.security.BusinessOwnerSecurity
+import com.dominikdev.booking.shared.infrastructure.security.ValidateServiceBelongsToBusiness
+import com.dominikdev.booking.shared.infrastructure.security.ValidateStaffBelongsToBusiness
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -52,18 +54,15 @@ class StaffServiceController(
     }
 
     @PostMapping("/{serviceId}")
-    @BusinessOwnerSecurity
+    @ValidateStaffBelongsToBusiness
+    @ValidateServiceBelongsToBusiness
     fun assignServiceToStaff(
         @PathVariable businessId: String,
         @PathVariable staffId: String,
         @PathVariable serviceId: String
     ): ResponseEntity<Void> {
         val staffUuid = UUID.fromString(staffId)
-        val businessUuid = UUID.fromString(businessId)
         val serviceUuid = UUID.fromString(serviceId)
-
-        // First verify that the staff member belongs to this business
-        staffService.getStaffMemberById(businessUuid, staffUuid)
 
         // Assign service
         staffServiceAssociationService.assignServiceToStaff(staffUuid, serviceUuid)
