@@ -1,5 +1,6 @@
 package com.dominikdev.booking.availability.infrastructure.adapter
 
+import com.dominikdev.booking.business.staff.StaffServiceAssociationService
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -10,7 +11,6 @@ import java.util.UUID
 class BusinessStaffServiceAdapter(
     private val staffServiceAssociationService: StaffServiceAssociationService
 ) : StaffServiceAdapter {
-
     override fun getServicesForStaff(staffId: UUID): List<UUID> {
         return staffServiceAssociationService.getServicesForStaff(staffId)
     }

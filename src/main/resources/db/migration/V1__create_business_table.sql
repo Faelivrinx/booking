@@ -100,3 +100,17 @@ CREATE INDEX idx_staff_email ON business_staff_members(email);
 
 -- Create index on keycloak_id for faster lookups
 CREATE INDEX idx_staff_keycloak_id ON business_staff_members(keycloak_id);
+
+--- Staff service associations
+CREATE TABLE staff_service_associations (
+    id UUID PRIMARY KEY,
+    staff_id UUID NOT NULL REFERENCES business_staff_members(id) ON DELETE CASCADE,
+    service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT uk_staff_service UNIQUE (staff_id, service_id)
+);
+
+-- Create indexes for faster lookups
+CREATE INDEX idx_ssa_staff_id ON staff_service_associations(staff_id);
+CREATE INDEX idx_ssa_service_id ON staff_service_associations(service_id);
