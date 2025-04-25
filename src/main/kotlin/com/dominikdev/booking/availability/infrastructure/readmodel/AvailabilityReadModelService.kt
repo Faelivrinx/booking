@@ -1,13 +1,17 @@
 package com.dominikdev.booking.availability.infrastructure.readmodel
 
-import com.dominikdev.booking.availability.domain.model.StaffDailyAvailabilityUpdatedEvent
+import com.dominikdev.booking.availability.domain.model.StaffAvailabilityUpdatedEvent
+import com.dominikdev.booking.availability.domain.model.TimeSlot
 import com.dominikdev.booking.availability.domain.repository.StaffAvailabilityRepository
 import com.dominikdev.booking.availability.infrastructure.adapter.ServiceInfoAdapter
 import com.dominikdev.booking.availability.infrastructure.adapter.StaffInfoAdapter
 import com.dominikdev.booking.availability.infrastructure.adapter.StaffServiceAdapter
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
+import java.util.UUID
 
 @Service
 class AvailabilityReadModelService(
@@ -17,77 +21,116 @@ class AvailabilityReadModelService(
     private val serviceInfoAdapter: ServiceInfoAdapter,
     private val staffInfoAdapter: StaffInfoAdapter
 ) {
-    @EventListener
-    @Transactional
-    fun handleStaffAvailabilityUpdated(event: StaffDailyAvailabilityUpdatedEvent) {
-        // 1. Get updated availability from domain model
-        val staffId = event.staffId
-        val businessId = event.businessId
-        val date = event.date
+    companion object {
+        private val logger = KotlinLogging.logger {}
+    }
+        @EventListener
+        @Transactional
+        fun handleStaffAvailabilityUpdated(event: StaffAvailabilityUpdatedEvent) {
+            logger.debug {
+                "Processing availability change for staff ${event.staffId} on ${event.date}:" +
+                        "\nPrevious time slots: ${event.previousTimeSlots}" +
+                        "\nCurrent time slots: ${event.currentTimeSlots}" +
+                        "\nDetected added slots: ${event.added}" +
+                        "\nDetected removed slots: ${event.removed}"
+            }
+            // Skip processing if no actual changes
+            if (!event.hasChanges) {
+                return
+            }
 
-        val availability = staffAvailabilityRepository.findByStaffIdAndDate(staffId, date)
+            val staffId = event.staffId
+            val businessId = event.businessId
+            val date = event.date
 
-        // 2. Delete existing booking slots for this staff and date
-        availableBookingSlotRepository.deleteByBusinessIdAndStaffIdAndDate(event.businessId, staffId, date)
+            // Get services this staff member can perform
+            val services = staffServiceAdapter.getServicesForStaff(staffId)
+            if (services.isEmpty()) {
+                // If staff has no services, just remove any slots that might exist
+                availableBookingSlotRepository.deleteByBusinessIdAndStaffIdAndDate(businessId, staffId, date)
+                return
+            }
 
-        if (availability == null) {
-            return // No availability to process
-        }
-
-        // 3. Get services this staff member can perform
-        val services = staffServiceAdapter.getServicesForStaff(staffId)
-        if (services.isEmpty()) {
-            return // No services to create slots for
-        }
-
-        // 5. Generate available booking slots for each service
-        val bookingSlots = mutableListOf<AvailableBookingSlot>()
-
-        for (serviceId in services) {
-            val serviceDuration = serviceInfoAdapter.getServiceDuration(serviceId) ?: continue
-
-            // Create bookable slots for each availability time slot
-            for (slot in availability.getTimeSlots()) {
-                // Skip slots shorter than the service duration
-                val slotDurationMinutes = java.time.Duration.between(
-                    slot.startTime,
-                    slot.endTime
-                ).toMinutes().toInt()
-
-                if (slotDurationMinutes < serviceDuration) {
-                    continue
+            // Approach 1: Surgical update of affected time slots
+            if (event.added.isNotEmpty() || event.removed.isNotEmpty()) {
+                // Remove slots that correspond to removed availability
+                event.removed.forEach { removedSlot ->
+                    availableBookingSlotRepository.deleteSlotInTimeRange(
+                        businessId = businessId,
+                        staffId = staffId,
+                        date = date,
+                        startTime = removedSlot.startTime,
+                        endTime = removedSlot.endTime
+                    )
                 }
 
-                // Create bookable slots with intervals matching the service duration
-                var currentStartTime = slot.startTime
-                while (true) {
-                    val potentialEndTime = currentStartTime.plusMinutes(serviceDuration.toLong())
+                // Add new slots only for added availability
+                val newBookingSlots = mutableListOf<AvailableBookingSlot>()
 
-                    if (potentialEndTime.isAfter(slot.endTime)) {
-                        break // Can't fit another slot
-                    }
+                for (serviceId in services) {
+                    val serviceDuration = serviceInfoAdapter.getServiceDuration(serviceId) ?: continue
 
-                    bookingSlots.add(
-                        AvailableBookingSlot(
+                    // Only process new time slots
+                    for (slot in event.added) {
+                        createBookingSlotsForTimeSlot(
                             businessId = businessId,
-                            serviceId = serviceId,
                             staffId = staffId,
+                            serviceId = serviceId,
                             date = date,
-                            startTime = currentStartTime,
-                            endTime = potentialEndTime,
-                            serviceDurationMinutes = serviceDuration,
+                            timeSlot = slot,
+                            serviceDuration = serviceDuration,
+                            slots = newBookingSlots
                         )
-                    )
+                    }
+                }
 
-                    // Move to the next interval based on the service duration
-                    currentStartTime = currentStartTime.plusMinutes(serviceDuration.toLong())
+                if (newBookingSlots.isNotEmpty()) {
+                    availableBookingSlotRepository.saveAll(newBookingSlots)
                 }
             }
         }
 
-        // 6. Save available booking slots
-        if (bookingSlots.isNotEmpty()) {
-            availableBookingSlotRepository.saveAll(bookingSlots)
+    private fun createBookingSlotsForTimeSlot(
+        businessId: UUID,
+        staffId: UUID,
+        serviceId: UUID,
+        date: LocalDate,
+        timeSlot: TimeSlot,
+        serviceDuration: Int,
+        slots: MutableList<AvailableBookingSlot>
+    ) {
+        // Skip slots shorter than the service duration
+        val slotDurationMinutes = java.time.Duration.between(
+            timeSlot.startTime,
+            timeSlot.endTime
+        ).toMinutes().toInt()
+
+        if (slotDurationMinutes < serviceDuration) {
+            return
+        }
+
+        // Calculate the number of possible slots within this time range
+        val numberOfPossibleSlots = (slotDurationMinutes - serviceDuration) / serviceDuration + 1
+
+        // Create bookable slots at exact service duration intervals
+        for (i in 0 until numberOfPossibleSlots) {
+            val startTime = timeSlot.startTime.plusMinutes((i * serviceDuration).toLong())
+            val endTime = startTime.plusMinutes(serviceDuration.toLong())
+
+            // Double-check that the end time doesn't exceed the available time slot
+            if (!endTime.isAfter(timeSlot.endTime)) {
+                slots.add(
+                    AvailableBookingSlot(
+                        businessId = businessId,
+                        serviceId = serviceId,
+                        staffId = staffId,
+                        date = date,
+                        startTime = startTime,
+                        endTime = endTime,
+                        serviceDurationMinutes = serviceDuration
+                    )
+                )
+            }
         }
     }
 }

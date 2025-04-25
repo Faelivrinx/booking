@@ -29,74 +29,20 @@ class AvailabilityApplicationService(
                 date = date
             )
 
-        // Set availability
-        availability.setAvailability(timeSlots)
+        // Get change result
+        val changeResult = availability.setAvailability(timeSlots)
 
-        // Save
-        val savedAvailability = availabilityRepository.save(availability)
+        // Only save if there are actual changes
+        if (changeResult.added.isNotEmpty() || changeResult.removed.isNotEmpty()) {
+            val savedAvailability = availabilityRepository.save(availability)
 
-        // Publish events
-        availability.getEvents().forEach { eventPublisher.publish(it) }
-        availability.clearEvents()
-
-        return savedAvailability
-    }
-
-    @Transactional
-    fun addTimeSlot(
-        staffId: UUID,
-        businessId: UUID,
-        date: LocalDate,
-        startTime: LocalTime,
-        endTime: LocalTime
-    ): StaffDailyAvailability {
-        // Get or create availability
-        val availability = availabilityRepository.findByStaffIdAndDate(staffId, date)
-            ?: StaffDailyAvailability(
-                staffId = staffId,
-                businessId = businessId,
-                date = date
-            )
-
-        // Add time slot
-        availability.addTimeSlot(startTime, endTime)
-
-        // Save
-        val savedAvailability = availabilityRepository.save(availability)
-
-        // Publish events
-        availability.getEvents().forEach { eventPublisher.publish(it) }
-        availability.clearEvents()
-
-        return savedAvailability
-    }
-
-    @Transactional
-    fun removeTimeSlot(
-        staffId: UUID,
-        date: LocalDate,
-        startTime: LocalTime,
-        endTime: LocalTime
-    ): Boolean {
-        val availability = availabilityRepository.findByStaffIdAndDate(staffId, date)
-            ?: return false
-
-        val timeSlot = TimeSlot(startTime, endTime)
-        val removed = availability.removeTimeSlot(timeSlot)
-
-        if (removed) {
-            if (availability.isEmpty()) {
-                availabilityRepository.deleteByStaffIdAndDate(staffId, date)
-            } else {
-                availabilityRepository.save(availability)
-            }
-
-            // Publish events
+            // Publish a single event
             availability.getEvents().forEach { eventPublisher.publish(it) }
             availability.clearEvents()
-        }
 
-        return removed
+            return savedAvailability
+        }
+        return availability
     }
 
     @Transactional(readOnly = true)

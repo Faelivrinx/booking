@@ -15,68 +15,67 @@ class StaffDailyAvailability(
 
     companion object {
         private val logger = KotlinLogging.logger {  }
+
+        /**
+         * Factory method to reconstitute an entity from persistence
+         * without triggering domain logic or generating events
+         */
+        fun reconstitute(
+            id: UUID,
+            staffId: UUID,
+            businessId: UUID,
+            date: LocalDate,
+            timeSlots: List<TimeSlot>
+        ): StaffDailyAvailability {
+            val instance = StaffDailyAvailability(
+                id = id,
+                staffId = staffId,
+                businessId = businessId,
+                date = date
+            )
+            // Directly set the time slots without validation or event generation
+            instance.timeSlots.addAll(timeSlots)
+            return instance
+        }
     }
 
     private val events = mutableListOf<DomainEvent>()
 
-    fun setAvailability(timeSlots: List<TimeSlot>) {
-        this.timeSlots.clear()
-        timeSlots.forEach { addTimeSlot(it.startTime, it.endTime) }
+    // Modified to create a single event with clear information about what changed
+    fun setAvailability(newTimeSlots: List<TimeSlot>): AvailabilityChangeResult {
+        val oldTimeSlots = timeSlots.toList() // Capture previous state
 
-        events.add(StaffDailyAvailabilityUpdatedEvent(
+        timeSlots.clear()
+        newTimeSlots.forEach { slot ->
+            if (validateTimeSlot(slot)) {
+                timeSlots.add(slot)
+            } else {
+                throw OverlappingTimeSlots("Invalid time slot: $slot")
+            }
+        }
+
+        // Single event with previous and new state
+        val event = StaffAvailabilityUpdatedEvent(
             staffId = staffId,
             businessId = businessId,
-            date = date
-        ))
+            date = date,
+            previousTimeSlots = oldTimeSlots,
+            currentTimeSlots = timeSlots.toList()
+        )
+
+        events.add(event)
+
+        return AvailabilityChangeResult(
+            added = newTimeSlots.filter { !oldTimeSlots.contains(it) },
+            removed = oldTimeSlots.filter { !newTimeSlots.contains(it) }
+        )
     }
 
-    fun addTimeSlot(startTime: LocalTime, endTime: LocalTime) {
-        logger.debug { "Adding time slot: $startTime - $endTime" }
-        val timeSlot = TimeSlot(startTime, endTime)
-
-        // Check for overlaps
-        if (hasOverlappingSlot(timeSlot)) {
-            throw OverlappingTimeSlots("New time slot overlaps with existing slots")
-        }
-
-        timeSlots.add(timeSlot)
-
-        events.add(StaffDailyAvailabilityUpdatedEvent(
-            staffId = staffId,
-            businessId = businessId,
-            date = date
-        ))
-    }
-
-    fun removeTimeSlot(timeSlot: TimeSlot): Boolean {
-        val removed = timeSlots.removeIf {
-            it.startTime == timeSlot.startTime && it.endTime == timeSlot.endTime
-        }
-
-        if (removed) {
-            events.add(StaffDailyAvailabilityUpdatedEvent(
-                staffId = staffId,
-                businessId = businessId,
-                date = date
-            ))
-        }
-
-        return removed
-    }
 
     fun getTimeSlots(): List<TimeSlot> = timeSlots.toList()
 
-    fun hasOverlappingSlot(timeSlot: TimeSlot): Boolean {
-        return timeSlots.any { it.overlaps(timeSlot) }
-    }
-
-    fun isAvailable(timeSlot: TimeSlot): Boolean {
-        if (timeSlots.isEmpty()) return false
-        return timeSlots.any { it.contains(timeSlot) }
-    }
-
-    fun isAvailable(startTime: LocalTime, endTime: LocalTime): Boolean {
-        return isAvailable(TimeSlot(startTime, endTime))
+    private fun validateTimeSlot(timeSlot: TimeSlot): Boolean {
+        return !timeSlots.any { it.overlaps(timeSlot) }
     }
 
     fun isEmpty(): Boolean = timeSlots.isEmpty()
@@ -87,3 +86,8 @@ class StaffDailyAvailability(
         events.clear()
     }
 }
+
+data class AvailabilityChangeResult(
+    val added: List<TimeSlot>,
+    val removed: List<TimeSlot>
+)

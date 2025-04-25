@@ -1,6 +1,7 @@
 package com.dominikdev.booking.availability.infrastructure
 
 import com.dominikdev.booking.availability.domain.model.StaffDailyAvailability
+import com.dominikdev.booking.availability.domain.model.TimeSlot
 import com.dominikdev.booking.availability.domain.repository.StaffAvailabilityRepository
 import com.dominikdev.booking.availability.infrastructure.entity.StaffAvailabilityEntity
 import com.dominikdev.booking.availability.infrastructure.entity.StaffAvailabilityTimeSlotEntity
@@ -44,19 +45,19 @@ class JpaStaffAvailabilityRepository(
 
         timeSlotJpaRepository.saveAll(timeSlotEntities)
 
-        return toDomain(entity, timeSlotEntities)
+        return availability // Return the original domain object
     }
 
     override fun findById(id: UUID): StaffDailyAvailability? {
         val entity = availabilityJpaRepository.findById(id).orElse(null) ?: return null
         val timeSlots = timeSlotJpaRepository.findByAvailabilityId(id)
-        return toDomain(entity, timeSlots)
+        return reconstituteDomain(entity, timeSlots)
     }
 
     override fun findByStaffIdAndDate(staffId: UUID, date: LocalDate): StaffDailyAvailability? {
         val entity = availabilityJpaRepository.findByStaffIdAndDate(staffId, date) ?: return null
         val timeSlots = timeSlotJpaRepository.findByAvailabilityId(entity.id)
-        return toDomain(entity, timeSlots)
+        return reconstituteDomain(entity, timeSlots)
     }
 
     override fun findByStaffIdAndDateRange(
@@ -67,7 +68,7 @@ class JpaStaffAvailabilityRepository(
         val entities = availabilityJpaRepository.findByStaffIdAndDateBetween(staffId, startDate, endDate)
         return entities.map { entity ->
             val timeSlots = timeSlotJpaRepository.findByAvailabilityId(entity.id)
-            toDomain(entity, timeSlots)
+            reconstituteDomain(entity, timeSlots)
         }
     }
 
@@ -75,7 +76,7 @@ class JpaStaffAvailabilityRepository(
         val entities = availabilityJpaRepository.findByBusinessIdAndDate(businessId, date)
         return entities.map { entity ->
             val timeSlots = timeSlotJpaRepository.findByAvailabilityId(entity.id)
-            toDomain(entity, timeSlots)
+            reconstituteDomain(entity, timeSlots)
         }
     }
 
@@ -88,29 +89,22 @@ class JpaStaffAvailabilityRepository(
         return availabilityJpaRepository.existsByStaffIdAndDate(staffId, date)
     }
 
-    private fun toDomain(
+    private fun reconstituteDomain(
         entity: StaffAvailabilityEntity,
-        timeSlots: List<StaffAvailabilityTimeSlotEntity>
+        timeSlotEntities: List<StaffAvailabilityTimeSlotEntity>
     ): StaffDailyAvailability {
-        val availability = StaffDailyAvailability(
+        // Convert time slot entities to domain value objects
+        val timeSlots = timeSlotEntities.map {
+            TimeSlot(it.startTime, it.endTime)
+        }
+
+        // Use a proper domain factory method that won't trigger events
+        return StaffDailyAvailability.reconstitute(
             id = entity.id,
             staffId = entity.staffId,
             businessId = entity.businessId,
-            date = entity.date
+            date = entity.date,
+            timeSlots = timeSlots
         )
-
-        // Add time slots
-        timeSlots.forEach { slot ->
-            try {
-                availability.addTimeSlot(slot.startTime, slot.endTime)
-            } catch (e: Exception) {
-                // Log warning but continue
-            }
-        }
-
-        // Clear events since these are from loading, not changing
-        availability.clearEvents()
-
-        return availability
     }
 }

@@ -84,14 +84,14 @@ interface AvailableBookingSlotRepository : JpaRepository<AvailableBookingSlot, U
 
     @Modifying
     @Query("""
-        DELETE FROM AvailableBookingSlot a 
-        WHERE a.businessId = :businessId
-        AND a.staffId = :staffId 
-        AND a.date = :date 
-        AND ((a.startTime >= :startTime AND a.startTime < :endTime) 
-        OR (a.endTime > :startTime AND a.endTime <= :endTime)
-        OR (a.startTime <= :startTime AND a.endTime >= :endTime))
-    """)
+    DELETE FROM AvailableBookingSlot a 
+    WHERE a.businessId = :businessId
+    AND a.staffId = :staffId 
+    AND a.date = :date 
+    AND ((a.startTime >= :startTime AND a.startTime < :endTime) 
+    OR (a.endTime > :startTime AND a.endTime <= :endTime)
+    OR (a.startTime <= :startTime AND a.endTime >= :endTime))
+""")
     fun deleteSlotInTimeRange(
         @Param("businessId") businessId: UUID,
         @Param("staffId") staffId: UUID,

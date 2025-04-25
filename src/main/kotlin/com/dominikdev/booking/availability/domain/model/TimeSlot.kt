@@ -22,4 +22,17 @@ data class TimeSlot(
     fun durationMinutes(): Long {
         return java.time.Duration.between(startTime, endTime).toMinutes()
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TimeSlot) return false
+
+        return startTime == other.startTime && endTime == other.endTime
+    }
+
+    override fun hashCode(): Int {
+        var result = startTime.hashCode()
+        result = 31 * result + endTime.hashCode()
+        return result
+    }
 }

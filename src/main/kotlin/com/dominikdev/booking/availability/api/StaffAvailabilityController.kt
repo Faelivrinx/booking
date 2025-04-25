@@ -65,53 +65,6 @@ class StaffAvailabilityController(
         return ResponseEntity.ok(response)
     }
 
-    @PostMapping("/{date}/slots")
-    fun addTimeSlot(
-        @PathVariable businessId: String,
-        @PathVariable staffId: String,
-        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
-        @RequestBody request: AddTimeSlotRequest
-    ): ResponseEntity<AvailabilityResponse> {
-        val availability = availabilityService.addTimeSlot(
-            staffId = UUID.fromString(staffId),
-            businessId = UUID.fromString(businessId),
-            date = date,
-            startTime = request.startTime,
-            endTime = request.endTime
-        )
-
-        val response = AvailabilityResponse(
-            id = availability.id,
-            staffId = availability.staffId,
-            businessId = availability.businessId,
-            date = availability.date,
-            timeSlots = availability.getTimeSlots().map { TimeSlotDto(it.startTime, it.endTime) }
-        )
-
-        return ResponseEntity.ok(response)
-    }
-
-    @DeleteMapping("/{date}/slots")
-    fun removeTimeSlot(
-        @PathVariable businessId: String,
-        @PathVariable staffId: String,
-        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
-        @RequestBody request: DeleteTimeSlotRequest
-    ): ResponseEntity<Void> {
-        val removed = availabilityService.removeTimeSlot(
-            staffId = UUID.fromString(staffId),
-            date = date,
-            startTime = request.startTime,
-            endTime = request.endTime
-        )
-
-        return if (removed) {
-            ResponseEntity.noContent().build()
-        } else {
-            ResponseEntity.notFound().build()
-        }
-    }
-
     // DTOs
     data class TimeSlotDto(
         val startTime: LocalTime,
@@ -120,16 +73,6 @@ class StaffAvailabilityController(
 
     data class SetAvailabilityRequest(
         val timeSlots: List<TimeSlotDto>
-    )
-
-    data class AddTimeSlotRequest(
-        val startTime: LocalTime,
-        val endTime: LocalTime
-    )
-
-    data class DeleteTimeSlotRequest(
-        val startTime: LocalTime,
-        val endTime: LocalTime
     )
 
     data class AvailabilityResponse(
