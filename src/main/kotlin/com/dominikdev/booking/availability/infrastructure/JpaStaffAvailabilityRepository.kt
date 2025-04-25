@@ -2,6 +2,8 @@ package com.dominikdev.booking.availability.infrastructure
 
 import com.dominikdev.booking.availability.domain.model.StaffDailyAvailability
 import com.dominikdev.booking.availability.domain.repository.StaffAvailabilityRepository
+import com.dominikdev.booking.availability.infrastructure.entity.StaffAvailabilityEntity
+import com.dominikdev.booking.availability.infrastructure.entity.StaffAvailabilityTimeSlotEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query

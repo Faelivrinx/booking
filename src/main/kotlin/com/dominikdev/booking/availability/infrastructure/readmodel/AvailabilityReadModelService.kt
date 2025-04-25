@@ -28,7 +28,7 @@ class AvailabilityReadModelService(
         val availability = staffAvailabilityRepository.findByStaffIdAndDate(staffId, date)
 
         // 2. Delete existing booking slots for this staff and date
-        availableBookingSlotRepository.deleteByStaffIdAndDate(staffId, date)
+        availableBookingSlotRepository.deleteByBusinessIdAndStaffIdAndDate(event.businessId, staffId, date)
 
         if (availability == null) {
             return // No availability to process
@@ -40,16 +40,11 @@ class AvailabilityReadModelService(
             return // No services to create slots for
         }
 
-        // 4. Get staff name
-        val staffName = staffInfoAdapter.getStaffName(staffId) ?: "Staff Member"
-
         // 5. Generate available booking slots for each service
         val bookingSlots = mutableListOf<AvailableBookingSlot>()
 
         for (serviceId in services) {
             val serviceDuration = serviceInfoAdapter.getServiceDuration(serviceId) ?: continue
-            val serviceName = serviceInfoAdapter.getServiceName(serviceId) ?: "Service"
-            val servicePrice = serviceInfoAdapter.getServicePrice(serviceId)
 
             // Create bookable slots for each availability time slot
             for (slot in availability.getTimeSlots()) {
@@ -81,9 +76,6 @@ class AvailabilityReadModelService(
                             startTime = currentStartTime,
                             endTime = potentialEndTime,
                             serviceDurationMinutes = serviceDuration,
-                            serviceName = serviceName,
-                            staffName = staffName,
-                            servicePrice = servicePrice
                         )
                     )
 

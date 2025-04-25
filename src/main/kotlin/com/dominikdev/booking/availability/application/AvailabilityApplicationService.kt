@@ -22,7 +22,6 @@ class AvailabilityApplicationService(
         date: LocalDate,
         timeSlots: List<TimeSlot>
     ): StaffDailyAvailability {
-        // Get or create availability
         val availability = availabilityRepository.findByStaffIdAndDate(staffId, date)
             ?: StaffDailyAvailability(
                 staffId = staffId,

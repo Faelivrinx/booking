@@ -4,87 +4,146 @@ import com.dominikdev.booking.availability.infrastructure.readmodel.AvailableBoo
 import com.dominikdev.booking.availability.infrastructure.readmodel.AvailableBookingSlotRepository
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
-import java.math.BigDecimal
+import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
 @RestController
-@RequestMapping("/businesses/{businessId}/booking-slots")
+@RequestMapping("/businesses/{businessId}/available-slots")
 class AvailableBookingSlotsController(
-    private val availableBookingSlotsRepository: AvailableBookingSlotRepository
+    private val availableBookingSlotRepository: AvailableBookingSlotRepository
 ) {
-    @GetMapping("/by-service/{serviceId}")
-    fun getAvailableSlotsByService(
+    @GetMapping("/service/{serviceId}")
+    fun getAvailableSlotsForService(
         @PathVariable businessId: String,
         @PathVariable serviceId: String,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
-    ): ResponseEntity<List<AvailableSlotResponse>> {
-        val slots = availableBookingSlotsRepository.findByServiceIdAndDateOrderByStartTime(
-            UUID.fromString(serviceId),
-            date
-        )
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?,
+    ): ResponseEntity<AvailableSlotsResponse> {
+        val businessUuid = UUID.fromString(businessId)
+        val serviceUuid = UUID.fromString(serviceId)
 
-        return ResponseEntity.ok(slots.map { mapToResponse(it) })
+        // Single date query
+        if (date != null) {
+            val slots = availableBookingSlotRepository
+                .findByBusinessIdAndServiceIdAndDateOrderByStartTime(
+                    businessUuid,
+                    serviceUuid,
+                    date
+                ).map { mapToSlot(it) }
+
+            return ResponseEntity.ok(AvailableSlotsResponse(slots))
+        }
+
+        // Default to today if no date parameters provided
+        val today = LocalDate.now()
+        val slots = availableBookingSlotRepository
+            .findByBusinessIdAndServiceIdAndDateOrderByStartTime(
+                businessUuid,
+                serviceUuid,
+                today
+            ).map { mapToSlot(it) }
+
+        return ResponseEntity.ok(AvailableSlotsResponse(slots))
     }
 
-    @GetMapping("/by-staff/{staffId}")
-    fun getAvailableSlotsByStaff(
+    @GetMapping("/staff/{staffId}/service/{serviceId}")
+    fun getAvailableSlotsForStaffAndService(
         @PathVariable businessId: String,
         @PathVariable staffId: String,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
-    ): ResponseEntity<List<AvailableSlotResponse>> {
-        val slots = availableBookingSlotsRepository.findByStaffIdAndDateOrderByStartTimeAsc(
-            UUID.fromString(staffId),
-            date
-        )
+        @PathVariable serviceId: String,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?
+    ): ResponseEntity<AvailableSlotsResponse> {
+        val businessUuid = UUID.fromString(businessId)
+        val staffUuid = UUID.fromString(staffId)
+        val serviceUuid = UUID.fromString(serviceId)
+        val queryDate = date ?: LocalDate.now()
 
-        return ResponseEntity.ok(slots.map { mapToResponse(it) })
+        // Get slots by business, staff and service
+        val slots = availableBookingSlotRepository
+            .findByBusinessIdAndStaffIdAndServiceIdAndDate(
+                businessUuid,
+                staffUuid,
+                serviceUuid,
+                queryDate
+            ).map { mapToSlot(it) }
+
+        return ResponseEntity.ok(AvailableSlotsResponse(slots))
     }
 
-    @GetMapping("/by-date")
-    fun getAvailableSlotsByDate(
+    @GetMapping("/service/{serviceId}/days-with-slots")
+    fun getDaysWithAvailableSlots(
         @PathVariable businessId: String,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
-    ): ResponseEntity<List<AvailableSlotResponse>> {
-        val slots = availableBookingSlotsRepository.findByBusinessIdAndDateOrderByServiceNameAscStartTimeAsc(
-            UUID.fromString(businessId),
-            date
-        )
+        @PathVariable serviceId: String,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate,
+        @RequestParam(defaultValue = "7") days: Int
+    ): ResponseEntity<DaysWithSlotsResponse> {
+        val businessUuid = UUID.fromString(businessId)
+        val serviceUuid = UUID.fromString(serviceId)
 
-        return ResponseEntity.ok(slots.map { mapToResponse(it) })
+        // Cap the maximum days to prevent excessive queries
+        val adjustedDays = days.coerceAtMost(60)
+
+        // Calculate end date
+        val endDate = startDate.plusDays(adjustedDays.toLong() - 1)
+
+        // Get all days with available slots
+        val daysWithSlots = availableBookingSlotRepository
+            .findDaysWithAvailableSlotsByBusinessIdAndServiceId(
+                businessUuid,
+                serviceUuid,
+                startDate,
+                endDate
+            )
+
+        // Create result for all days in range
+        val result = (0 until adjustedDays).map { dayOffset ->
+            val date = startDate.plusDays(dayOffset.toLong())
+            DayAvailability(
+                date = date,
+                hasSlots = daysWithSlots.contains(date)
+            )
+        }
+
+        return ResponseEntity.ok(DaysWithSlotsResponse(result))
     }
 
-    private fun mapToResponse(slot: AvailableBookingSlot): AvailableSlotResponse {
-        return AvailableSlotResponse(
-            id = slot.id,
-            serviceId = slot.serviceId,
-            staffId = slot.staffId,
-            date = slot.date,
-            startTime = slot.startTime,
-            endTime = slot.endTime,
-            serviceName = slot.serviceName,
-            staffName = slot.staffName,
-            servicePrice = slot.servicePrice,
-            durationMinutes = slot.serviceDurationMinutes
+    /**
+     * Maps an entity to the simplified response slot
+     */
+    private fun mapToSlot(entity: AvailableBookingSlot): AvailableTimeSlot {
+        return AvailableTimeSlot(
+            id = entity.id,
+            date = entity.date,
+            startTime = entity.startTime,
+            endTime = entity.endTime,
+            staffId = entity.staffId,
+            durationMinutes = entity.serviceDurationMinutes
         )
     }
 
-    data class AvailableSlotResponse(
+    /**
+     * Response classes
+     */
+    data class AvailableTimeSlot(
         val id: UUID,
-        val serviceId: UUID,
-        val staffId: UUID,
         val date: LocalDate,
         val startTime: LocalTime,
         val endTime: LocalTime,
-        val serviceName: String,
-        val staffName: String,
-        val servicePrice: BigDecimal?,
+        val staffId: UUID,
         val durationMinutes: Int
+    )
+
+    data class AvailableSlotsResponse(
+        val availableSlots: List<AvailableTimeSlot>
+    )
+
+    data class DayAvailability(
+        val date: LocalDate,
+        val hasSlots: Boolean
+    )
+
+    data class DaysWithSlotsResponse(
+        val days: List<DayAvailability>
     )
 }

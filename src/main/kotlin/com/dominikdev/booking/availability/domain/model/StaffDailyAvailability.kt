@@ -1,5 +1,6 @@
 package com.dominikdev.booking.availability.domain.model
 import com.dominikdev.booking.shared.event.DomainEvent
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -11,6 +12,11 @@ class StaffDailyAvailability(
     val date: LocalDate,
     private val timeSlots: MutableList<TimeSlot> = mutableListOf(),
 ) {
+
+    companion object {
+        private val logger = KotlinLogging.logger {  }
+    }
+
     private val events = mutableListOf<DomainEvent>()
 
     fun setAvailability(timeSlots: List<TimeSlot>) {
@@ -25,6 +31,7 @@ class StaffDailyAvailability(
     }
 
     fun addTimeSlot(startTime: LocalTime, endTime: LocalTime) {
+        logger.debug { "Adding time slot: $startTime - $endTime" }
         val timeSlot = TimeSlot(startTime, endTime)
 
         // Check for overlaps

@@ -15,7 +15,8 @@ import java.util.UUID
 @Component
 @Order(1) // Run this before the method execution
 class BusinessResourceValidationAspect(
-    private val validator: BusinessResourceValidator
+    private val validator: BusinessResourceValidator,
+    private val securityContextUtils: SecurityContextUtils
 ) {
     @Around("@annotation(ValidateStaffBelongsToBusiness)")
     fun validateStaffBelongsToBusiness(joinPoint: ProceedingJoinPoint): Any? {
@@ -23,7 +24,7 @@ class BusinessResourceValidationAspect(
         val method = signature.method
         val annotation = method.getAnnotation(ValidateStaffBelongsToBusiness::class.java)
 
-        val businessId = extractBusinessId()
+        val businessId = securityContextUtils.getBusinessIdOrThrow()
         val staffIdParam = annotation.staffIdParam
 
         // Extract the staff ID from method parameters

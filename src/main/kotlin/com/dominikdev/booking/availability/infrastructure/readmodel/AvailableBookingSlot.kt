@@ -39,13 +39,4 @@ class AvailableBookingSlot(
 
     @Column(name = "service_duration_minutes", nullable = false)
     val serviceDurationMinutes: Int,
-
-    @Column(name = "service_name", nullable = false, length = 100)
-    val serviceName: String,
-
-    @Column(name = "staff_name", nullable = false, length = 100)
-    val staffName: String,
-
-    @Column(name = "service_price", precision = 10, scale = 2)
-    val servicePrice: BigDecimal? = null
 )

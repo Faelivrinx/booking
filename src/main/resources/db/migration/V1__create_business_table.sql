@@ -142,10 +142,7 @@ CREATE TABLE available_booking_slots (
     date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    service_duration_minutes INT NOT NULL,
-    service_name VARCHAR(100) NOT NULL,
-    staff_name VARCHAR(100) NOT NULL,
-    service_price DECIMAL(10, 2)
+    service_duration_minutes INT NOT NULL
 );
 
 -- Indexes for efficient querying

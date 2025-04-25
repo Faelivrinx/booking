@@ -1,3 +1,5 @@
+Here's the updated list of available API endpoints for your booking system:
+
 # Booking System API Reference
 
 ## Business Profile Management
@@ -36,9 +38,9 @@
 - `DELETE /api/businesses/{businessId}/staff/{staffId}/availability/{date}/slots` - Remove a time slot from availability
 
 ## Available Booking Slots
-- `GET /api/businesses/{businessId}/booking-slots/by-service/{serviceId}?date=YYYY-MM-DD` - Get available slots for a service
-- `GET /api/businesses/{businessId}/booking-slots/by-staff/{staffId}?date=YYYY-MM-DD` - Get available slots for a staff member
-- `GET /api/businesses/{businessId}/booking-slots/by-date?date=YYYY-MM-DD` - Get all available slots for a date
+- `GET /api/businesses/{businessId}/available-slots/service/{serviceId}` - Get available slots for a service
+- `GET /api/businesses/{businessId}/available-slots/staff/{staffId}/service/{serviceId}` - Get available slots for a staff member and service
+- `GET /api/businesses/{businessId}/available-slots/service/{serviceId}/days-with-slots` - Get days with available slots for a service
 
 ## Client Identity Management
 - `POST /api/identity/clients/register` - Register a new client
