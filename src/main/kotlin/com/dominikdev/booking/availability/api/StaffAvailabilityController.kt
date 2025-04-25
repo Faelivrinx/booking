@@ -45,18 +45,14 @@ class StaffAvailabilityController(
     fun getAvailability(
         @PathVariable staffId: String,
         @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
-    ): ResponseEntity<AvailabilityResponse> {
+    ): ResponseEntity<AvailabilityTimeSlotsResponse> {
         val timeSlots = availabilityService.getAvailability(UUID.fromString(staffId), date)
 
         if (timeSlots.isEmpty()) {
             return ResponseEntity.notFound().build()
         }
 
-        val response = AvailabilityResponse(
-            id = UUID.randomUUID(), // Placeholder since we don't have the aggregate
-            staffId = UUID.fromString(staffId),
-            businessId = UUID.randomUUID(), // Placeholder since we don't have the aggregate
-            date = date,
+        val response = AvailabilityTimeSlotsResponse(
             timeSlots = timeSlots.map { TimeSlotDto(it.startTime, it.endTime) }
         )
 
@@ -135,6 +131,10 @@ class StaffAvailabilityController(
         val staffId: UUID,
         val businessId: UUID,
         val date: LocalDate,
+        val timeSlots: List<TimeSlotDto>
+    )
+
+    data class AvailabilityTimeSlotsResponse(
         val timeSlots: List<TimeSlotDto>
     )
 }
