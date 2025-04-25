@@ -114,3 +114,41 @@ CREATE TABLE staff_service_associations (
 -- Create indexes for faster lookups
 CREATE INDEX idx_ssa_staff_id ON staff_service_associations(staff_id);
 CREATE INDEX idx_ssa_service_id ON staff_service_associations(service_id);
+
+-- Create staff availability tables
+CREATE TABLE staff_daily_availability (
+    id UUID PRIMARY KEY,
+    staff_id UUID NOT NULL REFERENCES business_staff_members(id) ON DELETE CASCADE,
+    business_id UUID NOT NULL REFERENCES businesses_profile(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT uk_staff_date UNIQUE (staff_id, date)
+);
+
+CREATE TABLE staff_availability_time_slots (
+    availability_id UUID NOT NULL REFERENCES staff_daily_availability(id) ON DELETE CASCADE,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    PRIMARY KEY (availability_id, start_time, end_time)
+);
+
+-- Create read model for available booking slots
+CREATE TABLE available_booking_slots (
+    id UUID PRIMARY KEY,
+    business_id UUID NOT NULL REFERENCES businesses_profile(id) ON DELETE CASCADE,
+    service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    staff_id UUID NOT NULL REFERENCES business_staff_members(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    service_duration_minutes INT NOT NULL,
+    service_name VARCHAR(100) NOT NULL,
+    staff_name VARCHAR(100) NOT NULL,
+    service_price DECIMAL(10, 2)
+);
+
+-- Indexes for efficient querying
+CREATE INDEX idx_abs_business_date ON available_booking_slots(business_id, date);
+CREATE INDEX idx_abs_service_date ON available_booking_slots(service_id, date);
+CREATE INDEX idx_abs_staff_date ON available_booking_slots(staff_id, date);
