@@ -20,7 +20,7 @@ ADMIN_TOKEN=$(curl -s -X POST http://localhost:8080/realms/appointment-realm/pro
   -d "password=admin" \
   -d "grant_type=password" \
   -d "client_id=appointment-client" \
-  -d "client_secret=PxQGq0GzGKXDpVD9jVQfjTy12DTv9P32" | jq -r '.access_token')
+  -d "client_secret=TXd06fHNFjbw7ZJlcXkAFGSMEp9D5HW5" | jq -r '.access_token')
 
 if [ -z "$ADMIN_TOKEN" ]; then
   echo -e "${RED}Failed to get admin token${NC}"

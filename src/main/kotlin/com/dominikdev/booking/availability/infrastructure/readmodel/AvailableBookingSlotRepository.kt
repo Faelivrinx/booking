@@ -99,4 +99,46 @@ interface AvailableBookingSlotRepository : JpaRepository<AvailableBookingSlot, U
         @Param("startTime") startTime: LocalTime,
         @Param("endTime") endTime: LocalTime
     )
+
+    /**
+     * Find a specific available slot by all key fields
+     * Used to verify slot availability before booking
+     */
+    fun findByBusinessIdAndStaffIdAndServiceIdAndDateAndStartTime(
+        businessId: UUID,
+        staffId: UUID,
+        serviceId: UUID,
+        date: LocalDate,
+        startTime: LocalTime
+    ): AvailableBookingSlot?
+
+    /**
+     * Find available slots for a service with optional staff filter
+     * Used for finding alternatives when preferred slot is taken
+     */
+    @Query("""
+        SELECT a FROM AvailableBookingSlot a 
+        WHERE a.businessId = :businessId
+        AND a.serviceId = :serviceId
+        AND a.date = :date
+        AND (:staffId IS NULL OR a.staffId = :staffId)
+        ORDER BY a.startTime ASC
+    """)
+    fun findAvailableSlotsWithOptionalStaff(
+        @Param("businessId") businessId: UUID,
+        @Param("serviceId") serviceId: UUID,
+        @Param("date") date: LocalDate,
+        @Param("staffId") staffId: UUID?
+    ): List<AvailableBookingSlot>
+
+    /**
+     * Check if a specific slot exists (for quick availability check)
+     */
+    fun existsByBusinessIdAndStaffIdAndServiceIdAndDateAndStartTime(
+        businessId: UUID,
+        staffId: UUID,
+        serviceId: UUID,
+        date: LocalDate,
+        startTime: LocalTime
+    ): Boolean
 }

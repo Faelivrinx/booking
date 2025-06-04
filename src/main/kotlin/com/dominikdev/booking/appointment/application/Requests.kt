@@ -51,6 +51,15 @@ data class NoShowAppointmentCommand(
 )
 
 /**
+ * Command for staff appointment cancellation
+ */
+data class StaffCancelAppointmentCommand(
+    val appointmentId: UUID,
+    val staffId: UUID,
+    val reason: String
+)
+
+/**
  * Data Transfer Object for Appointment
  */
 data class AppointmentDTO(

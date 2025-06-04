@@ -236,6 +236,74 @@ class AppointmentService(
     }
 
     /**
+     * Gets all appointments for a staff member
+     */
+    @Transactional(readOnly = true)
+    fun getAllStaffAppointments(staffId: UUID): List<AppointmentDTO> {
+        val appointments = appointmentRepository.findByStaffId(staffId)
+        return appointments.map { mapToDTO(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getStaffAppointmentsForDateRange(
+        staffId: UUID,
+        startDate: LocalDate,
+        endDate: LocalDate
+    ): List<AppointmentDTO> {
+        val appointments = appointmentRepository.findByStaffIdAndDateRange(staffId, startDate, endDate)
+        return appointments.map { mapToDTO(it) }
+    }
+
+    /**
+     * Gets upcoming appointments for a staff member
+     */
+    @Transactional(readOnly = true)
+    fun getStaffUpcomingAppointments(staffId: UUID): List<AppointmentDTO> {
+        val today = LocalDate.now()
+        val statuses = listOf(AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED)
+        val appointments = appointmentRepository.findByStaffIdAndStatusesAndDateAfter(
+            staffId, statuses, today.minusDays(1)
+        )
+        return appointments.map { mapToDTO(it) }
+            .sortedBy { it.date.atTime(it.startTime) }
+    }
+
+    /**
+     * Staff cancels an appointment
+     * Different from client cancellation - may have different business rules
+     */
+    @Transactional
+    fun staffCancelAppointment(command: StaffCancelAppointmentCommand): AppointmentDTO {
+        logger.info { "Staff ${command.staffId} cancelling appointment ${command.appointmentId}" }
+
+        // Fetch the appointment
+        val appointment = appointmentRepository.findById(command.appointmentId)
+            ?: throw AppointmentException("Appointment not found")
+
+        // Verify staff owns this appointment
+        if (appointment.staffId != command.staffId) {
+            throw AppointmentException("Staff can only cancel their own appointments")
+        }
+
+        // Cancel the appointment
+        val cancelledAppointment = appointment.cancel(command.reason)
+
+        // Save the updated appointment
+        val savedAppointment = appointmentRepository.save(cancelledAppointment)
+
+        // Publish domain events
+        publishEvents(cancelledAppointment)
+
+        // Log for audit
+        logger.info {
+            "Staff cancellation completed - appointment: ${command.appointmentId}, " +
+                    "client: ${appointment.clientId}, date: ${appointment.date}"
+        }
+
+        return mapToDTO(savedAppointment)
+    }
+
+    /**
      * Publishes all domain events from an appointment
      */
     private fun publishEvents(appointment: Appointment) {
@@ -284,3 +352,4 @@ class AppointmentService(
         )
     }
 }
+

@@ -38,6 +38,20 @@ interface AppointmentJpaRepository : JpaRepository<AppointmentEntity, UUID> {
         @Param("businessId") businessId: UUID,
         @Param("fromDate") fromDate: LocalDate
     ): List<AppointmentEntity>
+
+    fun findByStaffId(staffId: UUID): List<AppointmentEntity>
+
+    fun findByStaffIdAndDateBetween(
+        staffId: UUID,
+        startDate: LocalDate,
+        endDate: LocalDate
+    ): List<AppointmentEntity>
+
+    fun findByStaffIdAndStatusInAndDateAfter(
+        staffId: UUID,
+        statuses: List<AppointmentStatus>,
+        date: LocalDate
+    ): List<AppointmentEntity>
 }
 
 /**
@@ -97,6 +111,29 @@ class JpaAppointmentRepository(
 
     override fun delete(id: UUID) {
         appointmentJpaRepository.deleteById(id)
+    }
+
+    override fun findByStaffId(staffId: UUID): List<Appointment> {
+        return appointmentJpaRepository.findByStaffId(staffId)
+            .map { mapToDomain(it) }
+    }
+
+    override fun findByStaffIdAndDateRange(
+        staffId: UUID,
+        startDate: LocalDate,
+        endDate: LocalDate
+    ): List<Appointment> {
+        return appointmentJpaRepository.findByStaffIdAndDateBetween(staffId, startDate, endDate)
+            .map { mapToDomain(it) }
+    }
+
+    override fun findByStaffIdAndStatusesAndDateAfter(
+        staffId: UUID,
+        statuses: List<AppointmentStatus>,
+        date: LocalDate
+    ): List<Appointment> {
+        return appointmentJpaRepository.findByStaffIdAndStatusInAndDateAfter(staffId, statuses, date)
+            .map { mapToDomain(it) }
     }
 
     /**
