@@ -12,6 +12,7 @@ import com.dominikdev.booking.shared.infrastructure.event.DomainEventPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.util.UUID
@@ -22,7 +23,6 @@ import java.util.UUID
 @Service
 class AppointmentService(
     private val appointmentRepository: AppointmentRepository,
-    private val availableSlotRepository: AvailableBookingSlotRepository,
     private val serviceInfoAdapter: ServiceInfoAdapter,
     private val staffInfoAdapter: StaffInfoAdapter,
     private val clientIdentityService: ClientIdentityService,
@@ -34,7 +34,7 @@ class AppointmentService(
      * Books a new appointment for a client
      * Uses PostgreSQL exclusion constraint to prevent double bookings
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun bookAppointment(command: BookAppointmentCommand): AppointmentDTO {
         logger.info { "Booking appointment for client ${command.clientId} with staff ${command.staffId}" }
 
@@ -71,7 +71,6 @@ class AppointmentService(
     /**
      * Gets appointments for a client
      */
-    @Transactional(readOnly = true)
     fun getClientAppointments(clientId: UUID): List<AppointmentDTO> {
         // Fetch appointments from repository
         val appointments = appointmentRepository.findByClientId(clientId)
@@ -83,7 +82,6 @@ class AppointmentService(
     /**
      * Gets upcoming appointments for a client
      */
-    @Transactional(readOnly = true)
     fun getClientUpcomingAppointments(clientId: UUID): List<AppointmentDTO> {
         // Get upcoming appointments (SCHEDULED or CONFIRMED status)
         val statuses = listOf(AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED)
@@ -96,7 +94,6 @@ class AppointmentService(
     /**
      * Gets appointments for a client in a specific date range
      */
-    @Transactional(readOnly = true)
     fun getClientAppointmentsByDateRange(
         clientId: UUID,
         startDate: LocalDate,
@@ -114,7 +111,6 @@ class AppointmentService(
     /**
      * Gets a specific appointment by ID
      */
-    @Transactional(readOnly = true)
     fun getAppointmentById(appointmentId: UUID): AppointmentDTO? {
         // Fetch appointment from repository
         val appointment = appointmentRepository.findById(appointmentId) ?: return null
@@ -126,7 +122,6 @@ class AppointmentService(
     /**
      * Gets staff's appointments for a date
      */
-    @Transactional(readOnly = true)
     fun getStaffAppointmentsForDate(staffId: UUID, date: LocalDate): List<AppointmentDTO> {
         val appointments = appointmentRepository.findByStaffIdAndDate(staffId, date)
         return appointments.map { mapToDTO(it) }

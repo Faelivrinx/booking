@@ -25,7 +25,6 @@ class AppointmentEventListener(
      * Removes the booked slot from available slots
      */
     @EventListener
-    @Transactional
     fun handleAppointmentScheduled(event: AppointmentScheduledEvent) {
         logger.info {
             "Appointment scheduled - business: ${event.businessId}, " +

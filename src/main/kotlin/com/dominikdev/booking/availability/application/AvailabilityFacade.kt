@@ -21,7 +21,6 @@ class AvailabilityFacade(
     /**
      * Checks if a specific time slot is available for booking
      */
-    @Transactional(readOnly = true)
     fun isSlotAvailable(query: SlotAvailabilityQuery): Boolean {
         return availableBookingSlotRepository.existsByBusinessIdAndStaffIdAndServiceIdAndDateAndStartTime(
             businessId = query.businessId,
@@ -35,7 +34,6 @@ class AvailabilityFacade(
     /**
      * Gets detailed information about an available slot
      */
-    @Transactional(readOnly = true)
     fun getAvailableSlot(query: SlotAvailabilityQuery): AvailableSlotDTO? {
         val slot = availableBookingSlotRepository.findByBusinessIdAndStaffIdAndServiceIdAndDateAndStartTime(
             businessId = query.businessId,
@@ -51,7 +49,6 @@ class AvailabilityFacade(
     /**
      * Finds alternative slots when the requested one is unavailable
      */
-    @Transactional(readOnly = true)
     fun findAlternativeSlots(query: AlternativeSlotsQuery): List<AvailableSlotDTO> {
         val alternatives = mutableListOf<AvailableSlotDTO>()
 
@@ -72,7 +69,6 @@ class AvailabilityFacade(
     /**
      * Gets all available slots for a service on a specific date
      */
-    @Transactional(readOnly = true)
     fun getAvailableSlotsForService(
         businessId: UUID,
         serviceId: UUID,
@@ -86,7 +82,6 @@ class AvailabilityFacade(
     /**
      * Gets available slots for a specific staff member
      */
-    @Transactional(readOnly = true)
     fun getAvailableSlotsForStaff(
         businessId: UUID,
         staffId: UUID,

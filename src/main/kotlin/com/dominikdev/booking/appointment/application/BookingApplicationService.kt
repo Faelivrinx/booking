@@ -3,11 +3,11 @@ package com.dominikdev.booking.appointment.application
 import com.dominikdev.booking.appointment.domain.model.AppointmentException
 import com.dominikdev.booking.availability.application.AlternativeSlotsQuery
 import com.dominikdev.booking.availability.application.AvailabilityFacade
-import com.dominikdev.booking.availability.application.AvailableSlotDTO
 import com.dominikdev.booking.availability.application.SlotAvailabilityQuery
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalTime
@@ -20,7 +20,7 @@ import java.util.UUID
 @Service
 class BookingApplicationService(
     private val appointmentService: AppointmentService,
-    private val availabilityFacade: AvailabilityFacade // Using facade from availability context
+    private val availabilityFacade: AvailabilityFacade
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -34,29 +34,27 @@ class BookingApplicationService(
                     "service: ${command.serviceId}, slot: ${command.date} ${command.startTime}"
         }
 
-        // Query availability through the facade
-        val availabilityQuery = SlotAvailabilityQuery(
-            businessId = command.businessId,
-            staffId = command.staffId,
-            serviceId = command.serviceId,
-            date = command.date,
-            startTime = command.startTime
-        )
-
-        val isAvailable = availabilityFacade.isSlotAvailable(availabilityQuery)
-
-        if (!isAvailable) {
-            logger.warn { "Slot no longer available for booking attempt" }
-
-            val alternatives = findAlternatives(command)
-
-            return BookingResult.SlotUnavailable(
-                message = "This time slot is no longer available",
-                alternativeSlots = alternatives
-            )
-        }
-
         return try {
+            // Pre-check availability (optional but recommended)
+            val availabilityQuery = SlotAvailabilityQuery(
+                businessId = command.businessId,
+                staffId = command.staffId,
+                serviceId = command.serviceId,
+                date = command.date,
+                startTime = command.startTime
+            )
+
+            val isAvailable = availabilityFacade.isSlotAvailable(availabilityQuery)
+
+            if (!isAvailable) {
+                logger.warn { "Slot no longer available for booking attempt" }
+                val alternatives = findAlternatives(command)
+                return BookingResult.SlotUnavailable(
+                    message = "This time slot is no longer available",
+                    alternativeSlots = alternatives
+                )
+            }
+
             // Attempt to book the appointment
             val bookingCommand = BookAppointmentCommand(
                 businessId = command.businessId,
@@ -77,7 +75,7 @@ class BookingApplicationService(
 
         } catch (e: DataIntegrityViolationException) {
             // This happens when the exclusion constraint is violated
-            logger.warn { "Booking failed due to constraint violation - concurrent booking" }
+            logger.warn(e) { "Booking failed due to constraint violation - concurrent booking" }
 
             val alternatives = findAlternatives(command)
 
@@ -122,30 +120,35 @@ class BookingApplicationService(
      * Finds alternative slots using the availability facade
      */
     private fun findAlternatives(command: ValidatedBookingCommand): List<AlternativeSlot> {
-        val alternativesQuery = AlternativeSlotsQuery(
-            businessId = command.businessId,
-            serviceId = command.serviceId,
-            staffId = command.staffId,
-            preferredDate = command.date,
-            preferredTime = command.startTime,
-            maxResults = 5,
-            searchFutureDays = true,
-            daysToSearch = 7
-        )
+        return try {
+            val alternativesQuery = AlternativeSlotsQuery(
+                businessId = command.businessId,
+                serviceId = command.serviceId,
+                staffId = command.staffId,
+                preferredDate = command.date,
+                preferredTime = command.startTime,
+                maxResults = 5,
+                searchFutureDays = true,
+                daysToSearch = 7
+            )
 
-        return availabilityFacade.findAlternativeSlots(alternativesQuery)
-            .map { slot ->
-                AlternativeSlot(
-                    date = slot.date,
-                    startTime = slot.startTime,
-                    endTime = slot.endTime,
-                    staffId = slot.staffId
-                )
-            }
+            availabilityFacade.findAlternativeSlots(alternativesQuery)
+                .map { slot ->
+                    AlternativeSlot(
+                        date = slot.date,
+                        startTime = slot.startTime,
+                        endTime = slot.endTime,
+                        staffId = slot.staffId
+                    )
+                }
+        } catch (e: Exception) {
+            logger.warn(e) { "Failed to find alternative slots: ${e.message}" }
+            emptyList()
+        }
     }
 }
 
-// Command and Result objects remain the same
+// Command and Result objects
 data class ValidatedBookingCommand(
     val businessId: UUID,
     val clientId: UUID,

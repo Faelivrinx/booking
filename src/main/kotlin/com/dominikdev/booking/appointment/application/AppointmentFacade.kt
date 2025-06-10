@@ -4,6 +4,7 @@ import com.dominikdev.booking.appointment.domain.model.AppointmentException
 import com.dominikdev.booking.appointment.domain.model.AppointmentStatus
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -14,17 +15,20 @@ import java.util.UUID
  */
 @Component
 class AppointmentFacade(
-    private val appointmentService: AppointmentService
+    private val appointmentService: AppointmentService,
+    private val bookingApplicationService: BookingApplicationService
+
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Books a new appointment for a client
+     * Books a new appointment for a client with validation and error handling
      */
     fun bookAppointment(request: BookAppointmentRequest, clientId: UUID): AppointmentDTO {
         logger.info { "Processing appointment booking for client $clientId" }
 
-        val command = BookAppointmentCommand(
+        // Use the BookingApplicationService for sophisticated booking logic
+        val validatedCommand = ValidatedBookingCommand(
             businessId = request.businessId,
             clientId = clientId,
             staffId = request.staffId,
@@ -35,7 +39,20 @@ class AppointmentFacade(
             notes = request.notes
         )
 
-        return appointmentService.bookAppointment(command)
+        return when (val result = bookingApplicationService.bookAppointmentWithValidation(validatedCommand)) {
+            is BookingResult.Success -> result.appointment
+            is BookingResult.SlotUnavailable -> {
+                val alternativesMessage = if (result.alternativeSlots.isNotEmpty()) {
+                    result.alternativeSlots.take(3).joinToString("\n") { slot ->
+                        "${slot.date} at ${slot.startTime}"
+                    }
+                } else ""
+
+                throw AppointmentException("${result.message}$alternativesMessage")
+            }
+            is BookingResult.ValidationError -> throw AppointmentException(result.message)
+            is BookingResult.SystemError -> throw AppointmentException(result.message)
+        }
     }
 
     /**

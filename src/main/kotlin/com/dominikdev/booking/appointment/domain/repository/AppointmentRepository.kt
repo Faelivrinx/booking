@@ -2,7 +2,6 @@ package com.dominikdev.booking.appointment.domain.repository
 
 import com.dominikdev.booking.appointment.domain.model.Appointment
 import com.dominikdev.booking.appointment.domain.model.AppointmentStatus
-import com.dominikdev.booking.appointment.infrastructure.entity.AppointmentEntity
 import java.time.LocalDate
 import java.util.UUID
 
@@ -73,18 +72,6 @@ interface AppointmentRepository {
      * Finds staff appointments with given statuses after a specific date
      */
     fun findByStaffIdAndStatusesAndDateAfter(
-        staffId: UUID,
-        statuses: List<AppointmentStatus>,
-        date: LocalDate
-    ): List<Appointment>
-
-    fun findByStaffIdAndDateBetween(
-        staffId: UUID,
-        startDate: LocalDate,
-        endDate: LocalDate
-    ): List<Appointment>
-
-    fun findByStaffIdAndStatusInAndDateAfter(
         staffId: UUID,
         statuses: List<AppointmentStatus>,
         date: LocalDate
