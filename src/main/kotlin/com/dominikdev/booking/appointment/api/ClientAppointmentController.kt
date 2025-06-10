@@ -36,8 +36,7 @@ class ClientAppointmentController(private val appointmentFacade: AppointmentFaca
         @RequestBody request: BookAppointmentRequest,
         @AuthenticationPrincipal jwt: Jwt
     ): ResponseEntity<AppointmentDTO> {
-        val clientId = UUID.fromString(jwt.subject)
-        val appointment = appointmentFacade.bookAppointment(request, clientId)
+        val appointment = appointmentFacade.bookAppointment(request, UUID.fromString(jwt.subject))
         return ResponseEntity(appointment, HttpStatus.CREATED)
     }
 

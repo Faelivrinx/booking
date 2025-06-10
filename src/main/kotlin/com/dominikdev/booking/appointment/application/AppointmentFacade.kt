@@ -2,8 +2,10 @@ package com.dominikdev.booking.appointment.application
 
 import com.dominikdev.booking.appointment.domain.model.AppointmentException
 import com.dominikdev.booking.appointment.domain.model.AppointmentStatus
+import com.dominikdev.booking.clients.identity.ClientIdentityService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalTime
@@ -16,7 +18,9 @@ import java.util.UUID
 @Component
 class AppointmentFacade(
     private val appointmentService: AppointmentService,
-    private val bookingApplicationService: BookingApplicationService
+    private val bookingApplicationService: BookingApplicationService,
+    // TODO: create port
+    private val clientIdentityService: ClientIdentityService
 
 ) {
     private val logger = KotlinLogging.logger {}
@@ -24,7 +28,10 @@ class AppointmentFacade(
     /**
      * Books a new appointment for a client with validation and error handling
      */
-    fun bookAppointment(request: BookAppointmentRequest, clientId: UUID): AppointmentDTO {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun bookAppointment(request: BookAppointmentRequest, keycloakId: UUID): AppointmentDTO {
+        val clientId = clientIdentityService.getClientByKeycloakId(keycloakId.toString()).id
+
         logger.info { "Processing appointment booking for client $clientId" }
 
         // Use the BookingApplicationService for sophisticated booking logic
@@ -59,14 +66,14 @@ class AppointmentFacade(
      * Gets all appointments for a client
      */
     fun getClientAppointments(clientId: UUID): List<AppointmentDTO> {
-        return appointmentService.getClientAppointments(clientId)
+        return appointmentService.getClientAppointments(clientIdentityService.getClientByKeycloakId(clientId.toString()).id)
     }
 
     /**
      * Gets a client's upcoming appointments
      */
     fun getClientUpcomingAppointments(clientId: UUID): List<AppointmentDTO> {
-        return appointmentService.getClientUpcomingAppointments(clientId)
+        return appointmentService.getClientUpcomingAppointments(clientIdentityService.getClientByKeycloakId(clientId.toString()).id)
     }
 
     /**
@@ -77,7 +84,7 @@ class AppointmentFacade(
         startDate: LocalDate,
         endDate: LocalDate
     ): List<AppointmentDTO> {
-        return appointmentService.getClientAppointmentsByDateRange(clientId, startDate, endDate)
+        return appointmentService.getClientAppointmentsByDateRange(clientIdentityService.getClientByKeycloakId(clientId.toString()).id, startDate, endDate)
     }
 
     /**
@@ -99,9 +106,10 @@ class AppointmentFacade(
      * Cancels an appointment
      */
     fun cancelAppointment(appointmentId: UUID, clientId: UUID, reason: String?): AppointmentDTO {
+        val clientIdToCancel = clientIdentityService.getClientByKeycloakId(clientId.toString()).id
         val command = CancelAppointmentCommand(
             appointmentId = appointmentId,
-            clientId = clientId,
+            clientId = clientIdToCancel,
             reason = reason
         )
 

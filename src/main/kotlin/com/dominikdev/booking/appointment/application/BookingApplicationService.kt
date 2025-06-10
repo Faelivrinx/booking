@@ -27,7 +27,6 @@ class BookingApplicationService(
     /**
      * Attempts to book an appointment with comprehensive error handling
      */
-    @Transactional
     fun bookAppointmentWithValidation(command: ValidatedBookingCommand): BookingResult {
         logger.info {
             "Processing validated booking - client: ${command.clientId}, " +

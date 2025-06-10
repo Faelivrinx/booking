@@ -34,7 +34,6 @@ class AppointmentService(
      * Books a new appointment for a client
      * Uses PostgreSQL exclusion constraint to prevent double bookings
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun bookAppointment(command: BookAppointmentCommand): AppointmentDTO {
         logger.info { "Booking appointment for client ${command.clientId} with staff ${command.staffId}" }
 

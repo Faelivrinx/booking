@@ -61,10 +61,10 @@ logging:
     com.dominikdev: ${LOG_LEVEL_APP:DEBUG}
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
     org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
-    org.springframework.transaction: ${LOG_LEVEL_SPRING_TX:INFO}
-    org.hibernate: ${LOG_LEVEL_HIBERNATE:INFO}
-    org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:INFO}
-    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_HIBERNATE_PARAMS:INFO}
+    org.springframework.transaction: ${LOG_LEVEL_SPRING_TX:DEBUG}
+    org.hibernate: ${LOG_LEVEL_HIBERNATE:DEBUG}
+    org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_HIBERNATE_PARAMS:DEBUG}
 #  file:
 #    name: ${LOG_FILE_PATH:/var/log/appointment-service/application.log}
 
