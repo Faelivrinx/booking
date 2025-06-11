@@ -1,5 +1,8 @@
 package com.dominikdev.booking.availability.infrastructure.readmodel
 
+import com.dominikdev.booking.appointment.domain.model.Appointment
+import com.dominikdev.booking.appointment.domain.repository.AppointmentRepository
+import com.dominikdev.booking.appointment.infrastructure.entity.AppointmentEntity
 import com.dominikdev.booking.availability.domain.model.StaffAvailabilityUpdatedEvent
 import com.dominikdev.booking.availability.domain.model.TimeSlot
 import com.dominikdev.booking.availability.domain.repository.StaffAvailabilityRepository
@@ -16,10 +19,9 @@ import java.util.UUID
 @Service
 class AvailabilityReadModelService(
     private val availableBookingSlotRepository: AvailableBookingSlotRepository,
-    private val staffAvailabilityRepository: StaffAvailabilityRepository,
     private val staffServiceAdapter: StaffServiceAdapter,
     private val serviceInfoAdapter: ServiceInfoAdapter,
-    private val staffInfoAdapter: StaffInfoAdapter
+    private val appointmentRepository: AppointmentRepository
 ) {
     companion object {
         private val logger = KotlinLogging.logger {}
@@ -51,6 +53,14 @@ class AvailabilityReadModelService(
                 return
             }
 
+            // Get existing appointments for this staff member on this date
+            val existingAppointments = appointmentRepository.findByStaffIdAndDate(staffId, date)
+
+            logger.debug {
+                "Found ${existingAppointments.size} existing appointments for staff $staffId on $date: " +
+                        existingAppointments.joinToString { "${it.startTime}-${it.endTime} (${it.status})" }
+            }
+
             // Approach 1: Surgical update of affected time slots
             if (event.added.isNotEmpty() || event.removed.isNotEmpty()) {
                 // Remove slots that correspond to removed availability
@@ -79,6 +89,7 @@ class AvailabilityReadModelService(
                             date = date,
                             timeSlot = slot,
                             serviceDuration = serviceDuration,
+                            existingAppointments = existingAppointments,
                             slots = newBookingSlots
                         )
                     }
@@ -97,6 +108,7 @@ class AvailabilityReadModelService(
         date: LocalDate,
         timeSlot: TimeSlot,
         serviceDuration: Int,
+        existingAppointments: List<Appointment>,
         slots: MutableList<AvailableBookingSlot>
     ) {
         // Skip slots shorter than the service duration
@@ -118,7 +130,22 @@ class AvailabilityReadModelService(
             val endTime = startTime.plusMinutes(serviceDuration.toLong())
 
             // Double-check that the end time doesn't exceed the available time slot
-            if (!endTime.isAfter(timeSlot.endTime)) {
+            if (endTime.isAfter(timeSlot.endTime)) {
+                continue
+            }
+
+            // Check if this potential slot conflicts with any existing appointments
+            val hasConflict = existingAppointments.any { appointment ->
+                // Only check for non-cancelled appointments
+                if (appointment.status.name == "CANCELLED") {
+                    false
+                } else {
+                    // Check if the potential slot overlaps with the appointment
+                    TimeSlot(startTime, endTime).overlaps(TimeSlot(appointment.startTime, appointment.endTime))
+                }
+            }
+
+            if (!hasConflict) {
                 slots.add(
                     AvailableBookingSlot(
                         businessId = businessId,
@@ -130,6 +157,14 @@ class AvailabilityReadModelService(
                         serviceDurationMinutes = serviceDuration
                     )
                 )
+
+                logger.debug {
+                    "Created available slot: $date $startTime-$endTime for service $serviceId, staff $staffId"
+                }
+            } else {
+                logger.debug {
+                    "Skipped slot $date $startTime-$endTime due to existing appointment conflict"
+                }
             }
         }
     }

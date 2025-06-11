@@ -33,7 +33,11 @@ class AppointmentConfirmedEvent(
     val appointmentId: UUID,
     val businessId: UUID,
     val clientId: UUID,
-    val staffId: UUID
+    val staffId: UUID,
+    val serviceId: UUID,
+    val date: LocalDate,
+    val startTime: LocalTime,
+    val endTime: LocalTime
 ) : AppointmentEvent() {
     override val eventName: String = "appointment.confirmed"
 }
@@ -46,6 +50,10 @@ class AppointmentCancelledEvent(
     val businessId: UUID,
     val clientId: UUID,
     val staffId: UUID,
+    val serviceId: UUID,
+    val date: LocalDate,
+    val startTime: LocalTime,
+    val endTime: LocalTime,
     val cancellationReason: String? = null
 ) : AppointmentEvent() {
     override val eventName: String = "appointment.cancelled"
@@ -58,7 +66,11 @@ class AppointmentCompletedEvent(
     val appointmentId: UUID,
     val businessId: UUID,
     val clientId: UUID,
-    val staffId: UUID
+    val staffId: UUID,
+    val serviceId: UUID,
+    val date: LocalDate,
+    val startTime: LocalTime,
+    val endTime: LocalTime
 ) : AppointmentEvent() {
     override val eventName: String = "appointment.completed"
 }
@@ -70,7 +82,11 @@ class AppointmentNoShowEvent(
     val appointmentId: UUID,
     val businessId: UUID,
     val clientId: UUID,
-    val staffId: UUID
+    val staffId: UUID,
+    val serviceId: UUID,
+    val date: LocalDate,
+    val startTime: LocalTime,
+    val endTime: LocalTime
 ) : AppointmentEvent() {
     override val eventName: String = "appointment.no_show"
 }

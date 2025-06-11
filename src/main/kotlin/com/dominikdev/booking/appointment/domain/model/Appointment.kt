@@ -131,7 +131,11 @@ class Appointment private constructor(
                 appointmentId = id,
                 businessId = businessId,
                 clientId = clientId,
-                staffId = staffId
+                staffId = staffId,
+                serviceId = serviceId,
+                date = date,
+                startTime = startTime,
+                endTime = endTime
             )
         )
 
@@ -162,6 +166,10 @@ class Appointment private constructor(
                 businessId = businessId,
                 clientId = clientId,
                 staffId = staffId,
+                serviceId = serviceId,
+                date = date,
+                startTime = startTime,
+                endTime = endTime,
                 cancellationReason = reason
             )
         )
@@ -187,7 +195,11 @@ class Appointment private constructor(
                 appointmentId = id,
                 businessId = businessId,
                 clientId = clientId,
-                staffId = staffId
+                staffId = staffId,
+                serviceId = serviceId,
+                date = date,
+                startTime = startTime,
+                endTime = endTime
             )
         )
 
@@ -212,7 +224,11 @@ class Appointment private constructor(
                 appointmentId = id,
                 businessId = businessId,
                 clientId = clientId,
-                staffId = staffId
+                staffId = staffId,
+                serviceId = serviceId,
+                date = date,
+                startTime = startTime,
+                endTime = endTime
             )
         )
 
