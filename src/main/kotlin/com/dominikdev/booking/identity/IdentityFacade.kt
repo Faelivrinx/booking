@@ -1,47 +1,47 @@
 package com.dominikdev.booking.identity
 
 import com.dominikdev.booking.identity.domain.Permission
+import com.dominikdev.booking.identity.domain.UserProfile
 import com.dominikdev.booking.identity.domain.UserRole
 import org.springframework.security.oauth2.jwt.Jwt
 import java.time.LocalDateTime
 import java.util.*
 
 interface IdentityFacade {
+    // Business Owner Management
     fun createBusinessOwner(request: CreateBusinessOwnerRequest): UserAccount
-    fun getBusinessOwner(userId: UUID): UserAccount?
+    fun getBusinessOwner(keycloakId: String): UserAccount?
 
     // Employee Account Management
     fun createEmployeeAccount(request: CreateEmployeeAccountRequest): UserAccount
-    fun getEmployeeAccount(userId: UUID): UserAccount?
-    fun deactivateEmployeeAccount(userId: UUID)
+    fun getEmployeeAccount(keycloakId: String): UserAccount?
+    fun deactivateEmployeeAccount(keycloakId: String)
 
     // Client Management
     fun registerClient(request: ClientRegistrationRequest): ClientRegistrationResult
-    fun verifyClientEmail(token: String): UserAccount
-    fun getClientAccount(userId: UUID): UserAccount?
-
-    // Authentication
-    fun authenticate(email: String, password: String): AuthenticationResult
-    fun refreshToken(refreshToken: String): AuthenticationResult
-    fun logout(userId: UUID)
+    fun getClientAccount(keycloakId: String): UserAccount?
 
     // Profile Management
-    fun updateProfile(userId: UUID, request: UpdateProfileRequest): UserAccount
-    fun changePassword(userId: UUID, currentPassword: String, newPassword: String)
+    fun updateProfile(keycloakId: String, request: UpdateProfileRequest): UserAccount
     fun requestPasswordReset(email: String)
-    fun resetPassword(token: String, newPassword: String)
 
     // Authorization
-    fun getUserRoles(userId: UUID): List<UserRole>
-    fun hasPermission(userId: UUID, permission: Permission): Boolean
+    fun getUserRoles(keycloakId: String): List<UserRole>
+    fun hasPermission(keycloakId: String, permission: Permission, businessId: UUID? = null): Boolean
 
+    // JWT Integration
     fun extractUserAttributes(): UserAttributes
     fun extractUserAttributes(jwt: Jwt): UserAttributes
+
+    // Helper methods for current user (from JWT context)
+    fun getCurrentUserProfile(): UserProfile?
+    fun getCurrentKeycloakId(): String?
+    fun getCurrentUserAccount(): UserAccount?
 }
 
 // Domain DTOs
 data class UserAccount(
-    val id: UUID,
+    val keycloakId: String,
     val email: String,
     val firstName: String,
     val lastName: String,
@@ -50,18 +50,12 @@ data class UserAccount(
     val isActive: Boolean,
     val isEmailVerified: Boolean,
     val createdAt: LocalDateTime
-)
-
-data class AuthenticationResult(
-    val userId: UUID,
-    val accessToken: String,
-    val refreshToken: String,
-    val expiresIn: Long,
-    val userRoles: List<UserRole>
-)
+) {
+    fun getFullName(): String = "$firstName $lastName"
+}
 
 data class ClientRegistrationResult(
-    val userId: UUID,
+    val keycloakId: String,
     val verificationRequired: Boolean,
     val verificationToken: String?
 )
@@ -99,20 +93,22 @@ data class UpdateProfileRequest(
     val phoneNumber: String?
 )
 
+data class PasswordResetRequest(
+    val email: String
+)
+
 data class UserAttributes(
-    val userId: UUID?,
+    val keycloakId: String,
     val businessId: UUID?,
     val role: UserRole?,
-    val email: String?,
-    val keycloakId: String
+    val email: String?
 ) {
     companion object {
         fun empty(keycloakId: String) = UserAttributes(
-            userId = null,
+            keycloakId = keycloakId,
             businessId = null,
             role = null,
-            email = null,
-            keycloakId = keycloakId
+            email = null
         )
     }
 }

@@ -5,183 +5,125 @@ import com.dominikdev.booking.identity.CreateBusinessOwnerRequest
 import com.dominikdev.booking.identity.CreateEmployeeAccountRequest
 import com.dominikdev.booking.identity.UpdateProfileRequest
 import com.dominikdev.booking.identity.domain.IdentityProvider
-import com.dominikdev.booking.identity.domain.UserProfileRepository
 import com.dominikdev.booking.identity.domain.*
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 class IdentityApplicationService(
-    private val userProfileRepository: UserProfileRepository,
     private val identityProvider: IdentityProvider
 ) {
     fun createBusinessOwner(request: CreateBusinessOwnerRequest): UserProfile {
-        // Validate email not already in use
-        if (userProfileRepository.existsByEmail(request.email)) {
-            throw DuplicateUserException(request.email)
-        }
+        validateEmail(request.email)
 
-        // Create user in Keycloak first
         val keycloakId = identityProvider.createBusinessOwnerUser(
             email = request.email,
             firstName = request.firstName,
             lastName = request.lastName,
+            phoneNumber = request.phoneNumber,
             temporaryPassword = request.temporaryPassword,
             businessId = request.businessId
         )
 
-        // Create profile in our database
-        val userProfile = UserProfile.createBusinessOwner(
-            keycloakId = keycloakId,
-            email = request.email,
-            firstName = request.firstName,
-            lastName = request.lastName,
-            phoneNumber = request.phoneNumber,
-            businessId = request.businessId
-        )
-
-        val savedProfile = userProfileRepository.save(userProfile)
-
-        // Send welcome notification (fire-and-forget)
-//        notificationsFacade.sendWelcomeMessage(
-//            WelcomeNotification(
-//                recipientId = savedProfile.id,
-//                recipientEmail = savedProfile.email,
-//                recipientName = savedProfile.getFullName(),
-//                userType = "Business Owner",
-//                businessName = null
-//            )
-//        )
-
-        return savedProfile
+        return identityProvider.getUserByKeycloakId(keycloakId)
+            ?: throw IdentityException("Failed to retrieve created business owner")
     }
 
     fun createEmployeeAccount(request: CreateEmployeeAccountRequest): UserProfile {
-        // Validate email not already in use
-        if (userProfileRepository.existsByEmail(request.email)) {
-            throw DuplicateUserException(request.email)
-        }
+        validateEmail(request.email)
 
-        // Create user in Keycloak first
         val keycloakId = identityProvider.createEmployeeUser(
             email = request.email,
             firstName = request.firstName,
             lastName = request.lastName,
+            phoneNumber = request.phoneNumber,
             temporaryPassword = request.temporaryPassword,
             businessId = request.businessId
         )
 
-        // Create profile in our database
-        val userProfile = UserProfile.createEmployee(
-            keycloakId = keycloakId,
-            email = request.email,
-            firstName = request.firstName,
-            lastName = request.lastName,
-            phoneNumber = request.phoneNumber,
-            businessId = request.businessId
-        )
-
-        val savedProfile = userProfileRepository.save(userProfile)
-
-//        // Send welcome notification (fire-and-forget)
-//        notificationsFacade.sendWelcomeMessage(
-//            WelcomeNotification(
-//                recipientId = savedProfile.id,
-//                recipientEmail = savedProfile.email,
-//                recipientName = savedProfile.getFullName(),
-//                userType = "Employee",
-//                businessName = request.businessName
-//            )
-//        )
-
-        return savedProfile
+        return identityProvider.getUserByKeycloakId(keycloakId)
+            ?: throw IdentityException("Failed to retrieve created employee")
     }
 
     fun registerClient(request: ClientRegistrationRequest): UserProfile {
-        // Validate email not already in use
-        if (userProfileRepository.existsByEmail(request.email)) {
-            throw DuplicateUserException(request.email)
-        }
+        validateEmail(request.email)
+        validatePassword(request.password)
 
-        // Create user in Keycloak first
         val keycloakId = identityProvider.createClientUser(
             email = request.email,
             firstName = request.firstName,
             lastName = request.lastName,
+            phoneNumber = request.phoneNumber,
             password = request.password
         )
 
-        // Create profile in our database
-        val userProfile = UserProfile.createClient(
+        return identityProvider.getUserByKeycloakId(keycloakId)
+            ?: throw IdentityException("Failed to retrieve created client")
+    }
+
+    fun updateProfile(keycloakId: String, request: UpdateProfileRequest): UserProfile {
+        return identityProvider.updateUser(
             keycloakId = keycloakId,
-            email = request.email,
             firstName = request.firstName,
             lastName = request.lastName,
             phoneNumber = request.phoneNumber
         )
-
-        val savedProfile = userProfileRepository.save(userProfile)
-
-        // Send welcome notification (fire-and-forget)
-//        notificationsFacade.sendWelcomeMessage(
-//            WelcomeNotification(
-//                recipientId = savedProfile.id,
-//                recipientEmail = savedProfile.email,
-//                recipientName = savedProfile.getFullName(),
-//                userType = "Client",
-//                businessName = null
-//            )
-//        )
-
-        return savedProfile
     }
 
-    fun updateProfile(userId: UUID, request: UpdateProfileRequest): UserProfile {
-        val userProfile = userProfileRepository.findById(userId)
-            ?: throw UserNotFoundException(userId.toString())
-
-        val updatedProfile = userProfile.updateProfile(
-            firstName = request.firstName,
-            lastName = request.lastName,
-            phoneNumber = request.phoneNumber
-        )
-
-        return userProfileRepository.save(updatedProfile)
+    fun deactivateUser(keycloakId: String) {
+        identityProvider.deactivateUser(keycloakId)
     }
 
-    fun deactivateUser(userId: UUID) {
-        val userProfile = userProfileRepository.findById(userId)
-            ?: throw UserNotFoundException(userId.toString())
-
-        // Deactivate in Keycloak
-        identityProvider.deactivateUser(userProfile.keycloakId)
-
-        // Deactivate in our database
-        val deactivatedProfile = userProfile.deactivate()
-        userProfileRepository.save(deactivatedProfile)
+    fun activateUser(keycloakId: String) {
+        identityProvider.activateUser(keycloakId)
     }
 
     @Transactional(readOnly = true)
-    fun getUserProfile(userId: UUID): UserProfile? {
-        return userProfileRepository.findById(userId)
-    }
-
-    @Transactional(readOnly = true)
-    fun getUserProfileByKeycloakId(keycloakId: String): UserProfile? {
-        return userProfileRepository.findByKeycloakId(keycloakId)
+    fun getUserProfile(keycloakId: String): UserProfile? {
+        return identityProvider.getUserByKeycloakId(keycloakId)
     }
 
     @Transactional(readOnly = true)
     fun getUserProfileByEmail(email: String): UserProfile? {
-        return userProfileRepository.findByEmail(email)
+        return identityProvider.getUserByEmail(email)
     }
 
     @Transactional(readOnly = true)
     fun getBusinessUsers(businessId: UUID): List<UserProfile> {
-        return userProfileRepository.findByBusinessId(businessId)
+        return identityProvider.getUsersByBusinessId(businessId)
     }
 
     fun requestPasswordReset(email: String) {
-        // Delegate to Keycloak for password reset flow
         identityProvider.sendPasswordResetEmail(email)
+    }
+
+    fun assignUserToBusiness(keycloakId: String, businessId: UUID) {
+        identityProvider.updateUserBusinessId(keycloakId, businessId)
+    }
+
+    @Transactional(readOnly = true)
+    fun hasPermission(keycloakId: String, permission: Permission, businessId: UUID? = null): Boolean {
+        return identityProvider.hasPermission(keycloakId, permission, businessId)
+    }
+
+    @Transactional(readOnly = true)
+    fun getUserRoles(keycloakId: String): List<UserRole> {
+        return identityProvider.getUserRoles(keycloakId)
+    }
+
+    private fun validateEmail(email: String) {
+        if (email.isBlank() || !email.contains("@")) {
+            throw InvalidUserDataException("Invalid email format")
+        }
+
+        // Check if user already exists
+        identityProvider.getUserByEmail(email)?.let {
+            throw DuplicateUserException(email)
+        }
+    }
+
+    private fun validatePassword(password: String) {
+        if (password.length < 8) {
+            throw InvalidUserDataException("Password must be at least 8 characters long")
+        }
     }
 }

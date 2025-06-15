@@ -1,63 +1,46 @@
 package com.dominikdev.booking.identity
 
-
 /**
  * # Identity Bounded Context
  *
  * ## Overview
- * The Identity context is responsible for user account management and authentication integration.
- * It acts as a bridge between Keycloak (authentication/authorization) and our application's
- * business user data.
+ * Access Control Layer (ACL) for Keycloak IDP. Provides domain-specific identity operations
+ * using Keycloak as the single source of truth for all user data.
  *
- * ## Architecture
+ * **Architecture:** Web Layer → Identity Facade → Keycloak
  *
- * ### Hybrid Authentication Model
- * - **Keycloak**: Handles authentication, password management, email verification, JWT tokens
- * - **Local Database**: Stores additional business profile data (phone, business associations)
- * - **Synchronization**: Each user profile linked via `keycloakId`
+ * **User Roles:**
+ * - **ADMIN**: Full system access
+ * - **BUSINESS_OWNER**: Manages business, employees, services
+ * - **EMPLOYEE**: Manages own schedule, views reservations
+ * - **CLIENT**: Books appointments
  *
- * ## Supported User Types
- *
- * ### 1. Business Owner
- * - **Creation**: Manual (admin-only process)
- * - **Purpose**: Manages business profile, services, employees
- * - **Attributes**: Linked to specific business via `businessId`
- * - **Keycloak Role**: `BUSINESS_OWNER`
- *
- * ### 2. Employee
- * - **Creation**: By business owner
- * - **Purpose**: Manages own schedule, views assigned reservations
- * - **Attributes**: Linked to business via `businessId`
- * - **Keycloak Role**: `EMPLOYEE`
- * - **Initial Setup**: Temporary password, forced change on first login
- *
- * ### 3. Client
- * - **Creation**: Self-registration
- * - **Purpose**: Books appointments, manages own reservations
- * - **Attributes**: No business association
- * - **Keycloak Role**: `CLIENT`
+ * ## Supported Operations
+ * - User creation (business owners, employees, clients)
+ * - Profile management and updates
+ * - Role-based permission checking
+ * - Business context validation
+ * - JWT token integration
+ * - Password reset functionality
  *
  * ## API Endpoints
  *
- * ### Public Endpoints
- * - `POST /api/identity/clients/register` - Client self-registration
- * - `POST /api/identity/password-reset` - Password reset request
+ * **Public:**
+ * - `POST /clients/register` - Client self-registration
+ * - `POST /password-reset` - Password reset request
  *
- * ### Admin Endpoints
- * - `POST /api/identity/business-owners` - Create business owner account
+ * **Admin:**
+ * - `POST /business-owners` - Create business owner
+ * - `GET /users/{keycloakId}` - Get any user
  *
- * ### Business Owner Endpoints
- * - `POST /api/identity/employees` - Create employee account
- * - `POST /api/identity/employees/{id}/deactivate` - Deactivate employee
+ * **Business Owner:**
+ * - `POST /employees` - Create employee
+ * - `POST /employees/{keycloakId}/deactivate` - Deactivate employee
+ * - `GET /businesses/{businessId}/users` - Get business users
  *
- * ### Authenticated User Endpoints
- * - `GET /api/identity/profile` - Get current user profile
- * - `PUT /api/identity/profile` - Update current user profile
- * - `GET /api/identity/attributes` - Get JWT attributes (businessId, etc.)
- *
- * ### Security Integration
- * - **JWT Validation**: Automatic validation via Spring Security
- * - **Role-based Access**: `@PreAuthorize` annotations
- * - **CORS Support**: Configured for cross-origin requests
- * - **Custom Role Converter**: Extracts roles from Keycloak JWT tokens
+ * **Authenticated:**
+ * - `GET /profile` - Get current user profile
+ * - `PUT /profile` - Update profile
+ * - `GET /roles` - Get user roles
+ * - `GET /permissions/{permission}` - Check permission
  */
