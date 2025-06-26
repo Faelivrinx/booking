@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Repository
-internal class JdbcStaffServiceAssignmentRepository(
+class JdbcStaffServiceAssignmentRepository(
     private val springRepository: SpringStaffServiceAssignmentRepository
 ) : StaffServiceAssignmentRepository {
 

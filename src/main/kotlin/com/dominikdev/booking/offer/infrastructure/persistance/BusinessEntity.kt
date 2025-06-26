@@ -3,13 +3,16 @@ package com.dominikdev.booking.offer.infrastructure.persistance
 import com.dominikdev.booking.offer.domain.Address
 import com.dominikdev.booking.offer.domain.Business
 import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.annotation.Id
 import java.time.LocalDateTime
 import java.util.*
 
 @Table(name = "businesses")
-internal data class BusinessEntity(
+@Entity
+data class BusinessEntity(
+
     @Id
     val id: UUID = UUID.randomUUID(),
 

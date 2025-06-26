@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 import java.util.*
 
 @Repository
-internal class JdbcServiceRepository(
+class JdbcServiceRepository(
     private val springRepository: SpringServiceRepository
 ) : ServiceRepository {
 

@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Repository
-internal class JdbcBusinessRepository(
+class JdbcBusinessRepository(
     private val springRepository: SpringBusinessRepository
 ) : BusinessRepository {
 

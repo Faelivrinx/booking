@@ -1,11 +1,13 @@
 package com.dominikdev.booking.offer.infrastructure.persistance
 
+import jakarta.transaction.Transactional
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import java.util.*
 
-internal interface SpringStaffServiceAssignmentRepository : CrudRepository<StaffServiceAssignmentEntity, String> {
+interface SpringStaffServiceAssignmentRepository : CrudRepository<StaffServiceAssignmentEntity, String> {
 
     fun findByStaffId(staffId: UUID): List<StaffServiceAssignmentEntity>
 
@@ -17,12 +19,20 @@ internal interface SpringStaffServiceAssignmentRepository : CrudRepository<Staff
 
     fun existsByStaffIdAndServiceId(staffId: UUID, serviceId: UUID): Boolean
 
+    @Modifying
+    @Transactional
     fun deleteByStaffIdAndServiceId(staffId: UUID, serviceId: UUID)
 
+    @Modifying
+    @Transactional
     fun deleteByStaffId(staffId: UUID)
 
+    @Modifying
+    @Transactional
     fun deleteByServiceId(serviceId: UUID)
 
-    @Query("DELETE FROM staff_service_assignments WHERE staff_id = :staffId")
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM StaffServiceAssignmentEntity s WHERE s.staffId = :staffId")
     fun deleteAllByStaffId(@Param("staffId") staffId: UUID)
 }

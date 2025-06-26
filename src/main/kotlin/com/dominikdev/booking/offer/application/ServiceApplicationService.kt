@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.util.*
 
-class ServiceApplicationService(
+open class ServiceApplicationService(
     private val serviceRepository: ServiceRepository,
     private val businessApplicationService: BusinessApplicationService,
     private val staffServiceAssignmentRepository: StaffServiceAssignmentRepository,

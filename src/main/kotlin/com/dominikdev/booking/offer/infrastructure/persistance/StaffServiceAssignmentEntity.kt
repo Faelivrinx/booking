@@ -1,13 +1,17 @@
 package com.dominikdev.booking.offer.infrastructure.persistance
 
 import com.dominikdev.booking.offer.domain.StaffServiceAssignment
-import jakarta.persistence.Column
-import jakarta.persistence.Table
+import jakarta.persistence.*
+import java.io.Serializable
 import java.time.LocalDateTime
 import java.util.*
 
 @Table(name ="staff_service_assignments")
-internal data class StaffServiceAssignmentEntity(
+@Entity
+@IdClass(StaffServiceAssignmentId::class)
+data class StaffServiceAssignmentEntity(
+
+    @Id
     @Column(name ="staff_id")
     val staffId: UUID,
 
@@ -40,4 +44,12 @@ internal data class StaffServiceAssignmentEntity(
             )
         }
     }
+}
+
+@Embeddable
+data class StaffServiceAssignmentId(
+    val staffId: UUID,
+    val serviceId: UUID
+) : Serializable {
+
 }

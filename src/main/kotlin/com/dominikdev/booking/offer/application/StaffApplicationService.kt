@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 import java.util.*
 import kotlin.random.Random
 
-class StaffApplicationService(
+open class StaffApplicationService(
     private val staffMemberRepository: StaffMemberRepository,
     private val businessApplicationService: BusinessApplicationService,
     private val identityFacade: IdentityFacade,

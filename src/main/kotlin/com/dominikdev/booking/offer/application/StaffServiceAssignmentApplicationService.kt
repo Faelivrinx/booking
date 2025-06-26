@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
-class StaffServiceAssignmentApplicationService(
+open class StaffServiceAssignmentApplicationService(
     private val staffServiceAssignmentRepository: StaffServiceAssignmentRepository,
     private val businessApplicationService: BusinessApplicationService,
     private val serviceApplicationService: ServiceApplicationService,
@@ -20,6 +20,76 @@ class StaffServiceAssignmentApplicationService(
     @Transactional
     fun assignServiceToStaff(businessId: UUID, staffId: UUID, serviceId: UUID) {
         logger.info("Assigning service $serviceId to staff $staffId in business $businessId")
+
+        // Validate business access and assignment permissions
+        validateAssignmentPermissions(businessId, staffId)
+
+        // Validate business exists and is active
+        businessApplicationService.validateBusinessActive(businessId)
+
+        // Validate staff member exists, is active, and belongs to business
+        val staffMember = staffApplicationService.validateStaffMemberActive(staffId)
+        if (staffMember.businessId != businessId) {
+            throw InvalidBusinessOperationException("Staff member does not belong to business: $businessId")
+        }
+
+        // Validate service exists, is active, and belongs to business
+        val service = serviceApplicationService.validateServiceActive(serviceId)
+        if (service.businessId != businessId) {
+            throw InvalidBusinessOperationException("Service $serviceId does not belong to business: $businessId")
+        }
+
+        // Check if assignment already exists
+        if (staffServiceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)) {
+            logger.info("Service $serviceId already assigned to staff $staffId")
+            return
+        }
+
+        // Create assignment
+        val assignment = StaffServiceAssignment(
+            staffId = staffId,
+            serviceId = serviceId,
+            businessId = businessId
+        )
+
+        staffServiceAssignmentRepository.save(assignment)
+        logger.info("Successfully assigned service $serviceId to staff $staffId")
+    }
+
+    @Transactional
+    fun unassignServiceFromStaff(businessId: UUID, staffId: UUID, serviceId: UUID) {
+        logger.info("Unassigning service $serviceId from staff $staffId in business $businessId")
+
+        // Validate business access and assignment permissions
+        validateAssignmentPermissions(businessId, staffId)
+
+        // Validate business exists
+        businessApplicationService.validateBusinessExists(businessId)
+
+        // Validate staff member belongs to business
+        val staffMember = staffApplicationService.validateStaffMemberExists(staffId)
+        if (staffMember.businessId != businessId) {
+            throw InvalidBusinessOperationException("Staff member does not belong to business: $businessId")
+        }
+
+        // Validate service belongs to business
+        val service = serviceApplicationService.validateServiceExists(serviceId)
+        if (service.businessId != businessId) {
+            throw InvalidBusinessOperationException("Service does not belong to business: $businessId")
+        }
+
+        // Remove assignment if it exists
+        if (staffServiceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)) {
+            staffServiceAssignmentRepository.deleteByStaffIdAndServiceId(staffId, serviceId)
+            logger.info("Successfully unassigned service $serviceId from staff $staffId")
+        } else {
+            logger.info("Service $serviceId was not assigned to staff $staffId")
+        }
+    }
+
+    @Transactional
+    fun setStaffServices(businessId: UUID, staffId: UUID, serviceIds: List<UUID>) {
+        logger.info("Setting ${serviceIds.size} services for staff $staffId in business $businessId")
 
         // Validate business access and assignment permissions
         validateAssignmentPermissions(businessId, staffId)

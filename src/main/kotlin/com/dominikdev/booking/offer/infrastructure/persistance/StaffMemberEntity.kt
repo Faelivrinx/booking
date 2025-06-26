@@ -2,13 +2,15 @@ package com.dominikdev.booking.offer.infrastructure.persistance
 
 import com.dominikdev.booking.offer.domain.StaffMember
 import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.annotation.Id
 import java.time.LocalDateTime
 import java.util.*
 
 @Table(name = "staff_members")
-internal data class StaffMemberEntity(
+@Entity
+data class StaffMemberEntity(
     @Id
     val id: UUID = UUID.randomUUID(),
 

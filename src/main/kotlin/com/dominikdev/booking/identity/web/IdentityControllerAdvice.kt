@@ -13,9 +13,9 @@ import java.time.LocalDateTime
 class IdentityControllerAdvice {
 
     @ExceptionHandler(DuplicateUserException::class)
-    fun handleDuplicateUserException(ex: DuplicateUserException): ResponseEntity<ErrorResponse> {
+    fun handleDuplicateUserException(ex: DuplicateUserException): ResponseEntity<ErrorResponseDetails> {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
-            ErrorResponse(
+            ErrorResponseDetails(
                 timestamp = LocalDateTime.now(),
                 status = HttpStatus.CONFLICT.value(),
                 error = "Conflict",
@@ -26,9 +26,9 @@ class IdentityControllerAdvice {
     }
 
     @ExceptionHandler(UserNotFoundException::class)
-    fun handleUserNotFoundException(ex: UserNotFoundException): ResponseEntity<ErrorResponse> {
+    fun handleUserNotFoundException(ex: UserNotFoundException): ResponseEntity<ErrorResponseDetails> {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            ErrorResponse(
+            ErrorResponseDetails(
                 timestamp = LocalDateTime.now(),
                 status = HttpStatus.NOT_FOUND.value(),
                 error = "Not Found",
@@ -39,9 +39,9 @@ class IdentityControllerAdvice {
     }
 
     @ExceptionHandler(IdentityException::class)
-    fun handleIdentityException(ex: IdentityException): ResponseEntity<ErrorResponse> {
+    fun handleIdentityException(ex: IdentityException): ResponseEntity<ErrorResponseDetails> {
         return ResponseEntity.badRequest().body(
-            ErrorResponse(
+            ErrorResponseDetails(
                 timestamp = LocalDateTime.now(),
                 status = HttpStatus.BAD_REQUEST.value(),
                 error = "Bad Request",
@@ -52,7 +52,7 @@ class IdentityControllerAdvice {
     }
 }
 
-data class ErrorResponse(
+data class ErrorResponseDetails(
     val timestamp: LocalDateTime,
     val status: Int,
     val error: String,

@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-class DefaultIdentityProvider(
+open class DefaultIdentityProvider(
     private val keycloak: Keycloak,
     @Value("\${keycloak.realm}") private val realm: String
 

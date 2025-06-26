@@ -9,7 +9,7 @@ import com.dominikdev.booking.identity.domain.*
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
-class IdentityApplicationService(
+open class IdentityApplicationService(
     private val identityProvider: IdentityProvider
 ) {
     fun createBusinessOwner(request: CreateBusinessOwnerRequest): UserProfile {
