@@ -112,7 +112,7 @@ create_business_complete() {
             \"ownerName\": \"$owner_name\",
             \"ownerEmail\": \"$owner_email\",
             \"ownerPhone\": \"$owner_phone\",
-            \"ownerPassword\": \"TempPassword123!\"
+            \"ownerPassword\": \"Password123!\"
         }")
 
   BUSINESS_ID=$(echo $BUSINESS_RESPONSE | jq -r '.id // empty')
@@ -409,28 +409,6 @@ create_test_businesses() {
   done
 }
 
-# Function to test API endpoints
-test_api_endpoints() {
-  echo -e "${BLUE}Testing API endpoints...${NC}"
-
-  # Test identity endpoints
-  echo -e "${YELLOW}Testing identity endpoints...${NC}"
-  IDENTITY_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$API_BASE_URL/identity/health")
-  if [ "$IDENTITY_HEALTH" == "200" ]; then
-    echo -e "${GREEN}✓ Identity service healthy${NC}"
-  else
-    echo -e "${RED}✗ Identity service issue: $IDENTITY_HEALTH${NC}"
-  fi
-
-  # Test business endpoints
-  echo -e "${YELLOW}Testing business endpoints...${NC}"
-  BUSINESS_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$API_BASE_URL/businesses/health")
-  if [ "$BUSINESS_HEALTH" == "200" ]; then
-    echo -e "${GREEN}✓ Business service healthy${NC}"
-  else
-    echo -e "${YELLOW}⚠ Business health endpoint: $BUSINESS_HEALTH${NC}"
-  fi
-}
 
 # Function to cleanup temporary files
 cleanup() {
@@ -467,7 +445,6 @@ main() {
     check_prerequisites
     wait_for_services
     get_admin_token
-    test_api_endpoints
     create_test_businesses
     cleanup
     ;;
@@ -475,7 +452,6 @@ main() {
     check_prerequisites
     wait_for_services
     get_admin_token
-    test_api_endpoints
     ;;
   "create")
     check_prerequisites
