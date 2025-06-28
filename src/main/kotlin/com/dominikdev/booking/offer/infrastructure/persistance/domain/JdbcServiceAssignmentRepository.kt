@@ -1,7 +1,7 @@
 package com.dominikdev.booking.offer.infrastructure.persistance.domain
 
 import com.dominikdev.booking.offer.domain.StaffServiceAssignment
-import com.dominikdev.booking.offer.domain.StaffServiceAssignmentRepository
+import com.dominikdev.booking.offer.domain.ServiceAssignmentRepository
 import com.dominikdev.booking.offer.infrastructure.persistance.SpringStaffServiceAssignmentRepository
 import com.dominikdev.booking.offer.infrastructure.persistance.StaffServiceAssignmentEntity
 import org.springframework.stereotype.Repository
@@ -9,9 +9,9 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Repository
-class JdbcStaffServiceAssignmentRepository(
+class JdbcServiceAssignmentRepository(
     private val springRepository: SpringStaffServiceAssignmentRepository
-) : StaffServiceAssignmentRepository {
+) : ServiceAssignmentRepository {
 
     override fun save(assignment: StaffServiceAssignment): StaffServiceAssignment {
         val entity = StaffServiceAssignmentEntity.fromDomain(assignment)

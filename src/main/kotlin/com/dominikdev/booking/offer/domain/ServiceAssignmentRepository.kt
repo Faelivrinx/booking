@@ -2,7 +2,7 @@ package com.dominikdev.booking.offer.domain
 
 import java.util.*
 
-interface StaffServiceAssignmentRepository {
+interface ServiceAssignmentRepository {
     fun save(assignment: StaffServiceAssignment): StaffServiceAssignment
     fun findByStaffId(staffId: UUID): List<StaffServiceAssignment>
     fun findByServiceId(serviceId: UUID): List<StaffServiceAssignment>

@@ -27,14 +27,14 @@ class OfferConfiguration {
     fun serviceApplicationService(
         serviceRepository: ServiceRepository,
         businessApplicationService: BusinessApplicationService,
-        staffServiceAssignmentRepository: StaffServiceAssignmentRepository,
+        serviceAssignmentRepository: ServiceAssignmentRepository,
         identityFacade: IdentityFacade
     ): ServiceApplicationService {
         logger.info("Configuring ServiceApplicationService")
         return ServiceApplicationService(
             serviceRepository,
             businessApplicationService,
-            staffServiceAssignmentRepository,
+            serviceAssignmentRepository,
             identityFacade
         )
     }
@@ -44,20 +44,20 @@ class OfferConfiguration {
         staffMemberRepository: StaffMemberRepository,
         businessApplicationService: BusinessApplicationService,
         identityFacade: IdentityFacade,
-        staffServiceAssignmentRepository: StaffServiceAssignmentRepository
+        serviceAssignmentRepository: ServiceAssignmentRepository
     ): StaffApplicationService {
         logger.info("Configuring StaffApplicationService")
         return StaffApplicationService(
             staffMemberRepository,
             businessApplicationService,
             identityFacade,
-            staffServiceAssignmentRepository
+            serviceAssignmentRepository
         )
     }
 
     @Bean
     fun staffServiceAssignmentApplicationService(
-        staffServiceAssignmentRepository: StaffServiceAssignmentRepository,
+        serviceAssignmentRepository: ServiceAssignmentRepository,
         businessApplicationService: BusinessApplicationService,
         serviceApplicationService: ServiceApplicationService,
         staffApplicationService: StaffApplicationService,
@@ -65,7 +65,7 @@ class OfferConfiguration {
     ): StaffServiceAssignmentApplicationService {
         logger.info("Configuring StaffServiceAssignmentApplicationService")
         return StaffServiceAssignmentApplicationService(
-            staffServiceAssignmentRepository,
+            serviceAssignmentRepository,
             businessApplicationService,
             serviceApplicationService,
             staffApplicationService,

@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 open class StaffServiceAssignmentApplicationService(
-    private val staffServiceAssignmentRepository: StaffServiceAssignmentRepository,
+    private val serviceAssignmentRepository: ServiceAssignmentRepository,
     private val businessApplicationService: BusinessApplicationService,
     private val serviceApplicationService: ServiceApplicationService,
     private val staffApplicationService: StaffApplicationService,
@@ -40,7 +40,7 @@ open class StaffServiceAssignmentApplicationService(
         }
 
         // Check if assignment already exists
-        if (staffServiceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)) {
+        if (serviceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)) {
             logger.info("Service $serviceId already assigned to staff $staffId")
             return
         }
@@ -52,7 +52,7 @@ open class StaffServiceAssignmentApplicationService(
             businessId = businessId
         )
 
-        staffServiceAssignmentRepository.save(assignment)
+        serviceAssignmentRepository.save(assignment)
         logger.info("Successfully assigned service $serviceId to staff $staffId")
     }
 
@@ -79,8 +79,8 @@ open class StaffServiceAssignmentApplicationService(
         }
 
         // Remove assignment if it exists
-        if (staffServiceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)) {
-            staffServiceAssignmentRepository.deleteByStaffIdAndServiceId(staffId, serviceId)
+        if (serviceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)) {
+            serviceAssignmentRepository.deleteByStaffIdAndServiceId(staffId, serviceId)
             logger.info("Successfully unassigned service $serviceId from staff $staffId")
         } else {
             logger.info("Service $serviceId was not assigned to staff $staffId")
@@ -115,7 +115,7 @@ open class StaffServiceAssignmentApplicationService(
         val uniqueServiceIds = serviceIds.distinct()
 
         // Use atomic replacement
-        staffServiceAssignmentRepository.replaceStaffServices(staffId, uniqueServiceIds, businessId)
+        serviceAssignmentRepository.replaceStaffServices(staffId, uniqueServiceIds, businessId)
         logger.info("Successfully set ${uniqueServiceIds.size} services for staff $staffId")
     }
 
@@ -135,7 +135,7 @@ open class StaffServiceAssignmentApplicationService(
             throw InvalidBusinessOperationException("Staff member does not belong to business: $businessId")
         }
 
-        val assignments = staffServiceAssignmentRepository.findByStaffId(staffId)
+        val assignments = serviceAssignmentRepository.findByStaffId(staffId)
         val serviceIds = assignments.map { it.serviceId }
 
         // Get services and filter out any that might have been deleted
@@ -160,7 +160,7 @@ open class StaffServiceAssignmentApplicationService(
             throw InvalidBusinessOperationException("Service does not belong to business: $businessId")
         }
 
-        val assignments = staffServiceAssignmentRepository.findByServiceId(serviceId)
+        val assignments = serviceAssignmentRepository.findByServiceId(serviceId)
         val staffIds = assignments.map { it.staffId }
 
         // Get staff members and filter out any that might have been deleted
@@ -187,7 +187,7 @@ open class StaffServiceAssignmentApplicationService(
 
     @Transactional(readOnly = true)
     fun isStaffAssignedToService(staffId: UUID, serviceId: UUID): Boolean {
-        return staffServiceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)
+        return serviceAssignmentRepository.existsByStaffIdAndServiceId(staffId, serviceId)
     }
 
     @Transactional(readOnly = true)
@@ -200,7 +200,7 @@ open class StaffServiceAssignmentApplicationService(
         // Validate business exists
         businessApplicationService.validateBusinessExists(businessId)
 
-        return staffServiceAssignmentRepository.findByBusinessId(businessId)
+        return serviceAssignmentRepository.findByBusinessId(businessId)
     }
 
     private fun validateAssignmentPermissions(businessId: UUID, staffId: UUID) {

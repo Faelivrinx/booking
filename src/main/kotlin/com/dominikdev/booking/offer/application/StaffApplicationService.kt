@@ -16,7 +16,7 @@ open class StaffApplicationService(
     private val staffMemberRepository: StaffMemberRepository,
     private val businessApplicationService: BusinessApplicationService,
     private val identityFacade: IdentityFacade,
-    private val staffServiceAssignmentRepository: StaffServiceAssignmentRepository
+    private val serviceAssignmentRepository: ServiceAssignmentRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(StaffApplicationService::class.java)
@@ -143,7 +143,7 @@ open class StaffApplicationService(
         staffMemberRepository.deactivate(staffId)
 
         // Remove all service assignments
-        staffServiceAssignmentRepository.deleteByStaffId(staffId)
+        serviceAssignmentRepository.deleteByStaffId(staffId)
 
         logger.info("Successfully deactivated staff member: $staffId")
     }

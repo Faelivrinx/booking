@@ -14,7 +14,7 @@ import java.util.*
 open class ServiceApplicationService(
     private val serviceRepository: ServiceRepository,
     private val businessApplicationService: BusinessApplicationService,
-    private val staffServiceAssignmentRepository: StaffServiceAssignmentRepository,
+    private val serviceAssignmentRepository: ServiceAssignmentRepository,
     private val identityFacade: IdentityFacade
 ) {
 
@@ -113,7 +113,7 @@ open class ServiceApplicationService(
         }
 
         // Remove all staff assignments for this service first
-        staffServiceAssignmentRepository.deleteByServiceId(serviceId)
+        serviceAssignmentRepository.deleteByServiceId(serviceId)
 
         // Hard delete the service
         serviceRepository.delete(serviceId)

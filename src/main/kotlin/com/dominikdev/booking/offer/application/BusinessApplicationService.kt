@@ -1,9 +1,8 @@
 package com.dominikdev.booking.offer.application
 
-import com.dominikdev.booking.identity.CreateBusinessOwnerRequest
 import com.dominikdev.booking.identity.IdentityFacade
 import com.dominikdev.booking.identity.domain.UserRole
-import com.dominikdev.booking.offer.CreateBusinessRequest
+import com.dominikdev.booking.offer.CreateBusinessProfileRequest
 import com.dominikdev.booking.offer.UpdateBusinessRequest
 import com.dominikdev.booking.offer.domain.*
 import org.slf4j.LoggerFactory
@@ -17,59 +16,6 @@ open class BusinessApplicationService(
 ) {
 
     private val logger = LoggerFactory.getLogger(BusinessApplicationService::class.java)
-
-    @Transactional
-    fun createBusiness(request: CreateBusinessRequest): Business {
-        logger.info("Creating business: ${request.name}")
-
-        // Validate current user doesn't already own a business
-        val userAttributes = identityFacade.extractUserAttributes()
-        if (userAttributes.role == UserRole.BUSINESS_OWNER && userAttributes.businessId != null) {
-            throw InvalidBusinessOperationException("User already owns a business")
-        }
-
-        try {
-            // Step 1: Create business owner in Identity context
-            val businessId = UUID.randomUUID()
-            val createOwnerRequest = CreateBusinessOwnerRequest(
-                email = request.ownerEmail,
-                firstName = request.ownerName.split(" ").first(),
-                lastName = request.ownerName.split(" ").drop(1).joinToString(" ").ifEmpty { "Owner" },
-                phoneNumber = request.ownerPhone,
-                temporaryPassword = request.ownerPassword,
-                businessId = businessId
-            )
-
-            val ownerAccount = identityFacade.createBusinessOwner(createOwnerRequest)
-            logger.info("Created business owner: ${ownerAccount.keycloakId}")
-
-            // Step 2: Create business
-            val business = Business(
-                id = businessId,
-                name = request.name.trim(),
-                description = request.description?.trim()?.takeIf { it.isNotEmpty() },
-                address = Address(
-                    street = request.street.trim(),
-                    city = request.city.trim(),
-                    state = request.state.trim(),
-                    postalCode = request.postalCode.trim()
-                ),
-                ownerId = ownerAccount.keycloakId,
-                isActive = true,
-                createdAt = LocalDateTime.now(),
-                updatedAt = LocalDateTime.now()
-            )
-
-            val savedBusiness = businessRepository.save(business)
-            logger.info("Successfully created business: ${savedBusiness.id}")
-
-            return savedBusiness
-
-        } catch (e: Exception) {
-            logger.error("Failed to create business: ${request.name}", e)
-            throw InvalidBusinessOperationException("Failed to create business: ${e.message}")
-        }
-    }
 
     @Transactional
     fun updateBusiness(businessId: UUID, request: UpdateBusinessRequest): Business {
@@ -106,7 +52,7 @@ open class BusinessApplicationService(
 
     @Transactional(readOnly = true)
     fun getBusiness(businessId: UUID): Business? {
-        logger.debug("Retrieving business: $businessId")
+        logger.debug("Retrieving business: {}", businessId)
 
         // Validate business access
         validateBusinessAccess(businessId)
@@ -210,5 +156,56 @@ open class BusinessApplicationService(
         }
 
         throw UnauthorizedBusinessAccessException("Insufficient permissions for business access")
+    }
+
+    @Transactional
+    fun createBusinessProfile(request: CreateBusinessProfileRequest): Business {
+        logger.info("Creating business profile: ${request.name}")
+
+        // Extract business owner info from JWT
+        val userAttributes = identityFacade.extractUserAttributes()
+
+        // Validate current user is a business owner
+        if (userAttributes.role != UserRole.BUSINESS_OWNER) {
+            throw UnauthorizedBusinessAccessException("Only business owners can create business profiles")
+        }
+
+        // Validate business owner has a business ID
+        if (userAttributes.businessId == null) {
+            throw InvalidBusinessOperationException("Business owner must have a business ID assigned")
+        }
+
+        // Check if business already exists
+        if (businessRepository.existsById(userAttributes.businessId)) {
+            throw InvalidBusinessOperationException("Business profile already exists")
+        }
+
+        try {
+            // Create business with existing owner
+            val business = Business(
+                id = userAttributes.businessId,
+                name = request.name.trim(),
+                description = request.description?.trim()?.takeIf { it.isNotEmpty() },
+                address = Address(
+                    street = request.street.trim(),
+                    city = request.city.trim(),
+                    state = request.state.trim(),
+                    postalCode = request.postalCode.trim()
+                ),
+                ownerId = userAttributes.keycloakId,
+                isActive = true,
+                createdAt = LocalDateTime.now(),
+                updatedAt = LocalDateTime.now()
+            )
+
+            val savedBusiness = businessRepository.save(business)
+            logger.info("Successfully created business profile: ${savedBusiness.id}")
+
+            return savedBusiness
+
+        } catch (e: Exception) {
+            logger.error("Failed to create business profile: ${request.name}", e)
+            throw InvalidBusinessOperationException("Failed to create business profile: ${e.message}")
+        }
     }
 }

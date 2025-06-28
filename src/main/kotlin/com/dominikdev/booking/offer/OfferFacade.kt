@@ -1,12 +1,14 @@
 package com.dominikdev.booking.offer
 
+import com.dominikdev.booking.identity.UserAccount
+import com.dominikdev.booking.offer.infrastructure.web.CreateBusinessProfileRequest
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
 
 interface OfferFacade {
     // Business Management
-    fun createBusiness(request: CreateBusinessRequest): BusinessProfile
+    fun createBusinessProfile(request: CreateBusinessProfileRequest): BusinessProfile
     fun updateBusiness(businessId: UUID, request: UpdateBusinessRequest): BusinessProfile
     fun getBusiness(businessId: UUID): BusinessProfile?
 
@@ -17,12 +19,12 @@ interface OfferFacade {
     fun getBusinessServices(businessId: UUID): List<Service>
     fun getService(businessId: UUID, serviceId: UUID): Service?
 
-    // Staff Management
-    fun addStaffMember(businessId: UUID, request: AddStaffMemberRequest): StaffMember
-    fun updateStaffMember(businessId: UUID, staffId: UUID, request: UpdateStaffMemberRequest): StaffMember
-    fun deactivateStaffMember(businessId: UUID, staffId: UUID)
-    fun getBusinessStaff(businessId: UUID): List<StaffMember>
-    fun getStaffMember(businessId: UUID, staffId: UUID): StaffMember?
+    // Employee Management
+    fun assignServicesToEmployee(businessId: UUID, employeeKeycloakId: String, serviceIds: List<UUID>)
+    fun unassignServiceFromEmployee(businessId: UUID, employeeKeycloakId: String, serviceId: UUID)
+    fun getEmployeeServices(businessId: UUID, employeeKeycloakId: String): List<Service>
+    fun getServiceEmployees(businessId: UUID, serviceId: UUID): List<UserAccount>
+    fun getBusinessEmployees(businessId: UUID): List<UserAccount>
 
     // Staff Service Assignments
     fun assignServiceToStaff(businessId: UUID, staffId: UUID, serviceId: UUID)
@@ -37,19 +39,6 @@ interface OfferFacade {
     fun isStaffMemberActive(staffId: UUID): Boolean
     fun getStaffMemberBusinessId(staffId: UUID): UUID?
 }
-
-data class CreateBusinessRequest(
-    val name: String,
-    val description: String?,
-    val street: String,
-    val city: String,
-    val state: String,
-    val postalCode: String,
-    val ownerName: String,
-    val ownerEmail: String,
-    val ownerPhone: String?,
-    val ownerPassword: String
-)
 
 data class UpdateBusinessRequest(
     val name: String,

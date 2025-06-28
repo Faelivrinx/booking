@@ -5,6 +5,7 @@ import com.dominikdev.booking.offer.application.ServiceApplicationService
 import com.dominikdev.booking.offer.application.StaffApplicationService
 import com.dominikdev.booking.offer.application.StaffServiceAssignmentApplicationService
 import com.dominikdev.booking.offer.domain.Business
+import com.dominikdev.booking.offer.infrastructure.web.CreateBusinessProfileRequest
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import java.util.*
@@ -17,16 +18,6 @@ class DefaultOfferFacade(
 ) : OfferFacade {
 
     private val logger = LoggerFactory.getLogger(DefaultOfferFacade::class.java)
-
-    // Business Management
-    override fun createBusiness(request: CreateBusinessRequest): BusinessProfile {
-        logger.info("Creating business: ${request.name}")
-
-        val business = businessApplicationService.createBusiness(request)
-        return mapToBusinessProfile(business).also {
-            logger.info("Successfully created business: ${it.id}")
-        }
-    }
 
     override fun updateBusiness(businessId: UUID, request: UpdateBusinessRequest): BusinessProfile {
         logger.info("Updating business: $businessId")

@@ -60,6 +60,10 @@ data class ClientRegistrationResult(
     val verificationToken: String?
 )
 
+data class EmployeeCreationResult(
+    val userProfile: UserProfile,
+)
+
 // Request DTOs
 data class CreateBusinessOwnerRequest(
     val email: String,

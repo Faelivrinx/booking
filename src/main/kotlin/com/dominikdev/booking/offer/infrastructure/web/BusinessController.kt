@@ -18,23 +18,21 @@ class BusinessController(
 
     private val logger = LoggerFactory.getLogger(BusinessController::class.java)
 
-    // Business Profile Management
-
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    fun createBusiness(@Valid @RequestBody request: CreateBusinessRequest): ResponseEntity<*> {
-        logger.info("Creating business: ${request.name}")
+    @PostMapping("/profile")
+    @PreAuthorize("hasRole('BUSINESS_OWNER')")
+    fun createBusinessProfile(@Valid @RequestBody request: CreateBusinessProfileRequest): ResponseEntity<*> {
+        logger.info("Creating business profile")
 
         return try {
-            val businessProfile = offerFacade.createBusiness(request)
-            logger.info("Successfully created business: ${businessProfile.id}")
+            val businessProfile = offerFacade.createBusinessProfile(request)
+            logger.info("Successfully created business profile: ${businessProfile.id}")
             ResponseEntity.status(HttpStatus.CREATED).body(businessProfile)
         } catch (e: Exception) {
-            logger.error("Failed to create business: ${request.name}", e)
+            logger.error("Failed to create business profile", e)
             ResponseEntity.badRequest().body(
                 ErrorResponse(
-                    error = "BUSINESS_CREATION_FAILED",
-                    message = e.message ?: "Failed to create business",
+                    error = "BUSINESS_PROFILE_CREATION_FAILED",
+                    message = e.message ?: "Failed to create business profile",
                     details = "Please verify the business information and try again"
                 )
             )
@@ -44,7 +42,7 @@ class BusinessController(
     @GetMapping("/{businessId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_OWNER') or hasRole('EMPLOYEE')")
     fun getBusiness(@PathVariable businessId: UUID): ResponseEntity<*> {
-        logger.debug("Retrieving business: $businessId")
+        logger.debug("Retrieving business: {}", businessId)
 
         return try {
             val businessProfile = offerFacade.getBusiness(businessId)
@@ -224,107 +222,87 @@ class BusinessController(
 
     // Staff Management
 
-    @GetMapping("/{businessId}/staff")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_OWNER') or hasRole('EMPLOYEE')")
-    fun getBusinessStaff(@PathVariable businessId: UUID): ResponseEntity<*> {
-        logger.debug("Retrieving staff for business: $businessId")
+    @GetMapping("/{businessId}/employees")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_OWNER')")
+    fun getBusinessEmployees(@PathVariable businessId: UUID): ResponseEntity<*> {
+        logger.debug("Retrieving employees for business: $businessId")
 
         return try {
-            val staff = offerFacade.getBusinessStaff(businessId)
+            // Get employees from Identity context
+            val employees = offerFacade.getBusinessEmployees(businessId)
             ResponseEntity.ok(
-                StaffResponse(
+                EmployeesResponse(
                     businessId = businessId,
-                    staff = staff,
-                    totalCount = staff.size
+                    employees = employees,
+                    totalCount = employees.size
                 )
             )
         } catch (e: Exception) {
-            logger.error("Failed to retrieve staff for business: $businessId", e)
+            logger.error("Failed to retrieve employees for business: $businessId", e)
             ResponseEntity.badRequest().body(
                 ErrorResponse(
-                    error = "STAFF_RETRIEVAL_FAILED",
-                    message = e.message ?: "Failed to retrieve staff",
+                    error = "EMPLOYEES_RETRIEVAL_FAILED",
+                    message = e.message ?: "Failed to retrieve employees",
                     details = "Please verify permissions and business access"
                 )
             )
         }
     }
 
-    @GetMapping("/{businessId}/staff/{staffId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_OWNER') or hasRole('EMPLOYEE')")
-    fun getStaffMember(
+    @PostMapping("/{businessId}/employees/{employeeKeycloakId}/services")
+    @PreAuthorize("hasRole('BUSINESS_OWNER') or hasRole('EMPLOYEE')")
+    fun assignServicesToEmployee(
         @PathVariable businessId: UUID,
-        @PathVariable staffId: UUID
+        @PathVariable employeeKeycloakId: String,
+        @Valid @RequestBody request: AssignServicesRequest
     ): ResponseEntity<*> {
-        logger.debug("Retrieving staff member: $staffId")
+        logger.info("Assigning ${request.serviceIds.size} services to employee: $employeeKeycloakId")
 
         return try {
-            val staffMember = offerFacade.getStaffMember(businessId, staffId)
-            if (staffMember != null) {
-                ResponseEntity.ok(staffMember)
-            } else {
-                ResponseEntity.notFound().build<Any>()
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to retrieve staff member: $staffId", e)
-            ResponseEntity.badRequest().body(
-                ErrorResponse(
-                    error = "STAFF_MEMBER_RETRIEVAL_FAILED",
-                    message = e.message ?: "Failed to retrieve staff member",
-                    details = "Staff member may not exist or be accessible"
-                )
-            )
-        }
-    }
-
-    @PostMapping("/{businessId}/staff")
-    @PreAuthorize("hasRole('BUSINESS_OWNER')")
-    fun addStaffMember(
-        @PathVariable businessId: UUID,
-        @Valid @RequestBody request: AddStaffMemberRequest
-    ): ResponseEntity<*> {
-        logger.info("Adding staff member '${request.email}' to business: $businessId")
-
-        return try {
-            val staffMember = offerFacade.addStaffMember(businessId, request)
-            logger.info("Successfully added staff member: ${staffMember.id}")
-            ResponseEntity.status(HttpStatus.CREATED).body(staffMember)
-        } catch (e: Exception) {
-            logger.error("Failed to add staff member to business: $businessId", e)
-            ResponseEntity.badRequest().body(
-                ErrorResponse(
-                    error = "STAFF_MEMBER_CREATION_FAILED",
-                    message = e.message ?: "Failed to add staff member",
-                    details = "Please verify the staff information and permissions"
-                )
-            )
-        }
-    }
-
-    @PostMapping("/{businessId}/staff/{staffId}/deactivate")
-    @PreAuthorize("hasRole('BUSINESS_OWNER')")
-    fun deactivateStaffMember(
-        @PathVariable businessId: UUID,
-        @PathVariable staffId: UUID
-    ): ResponseEntity<*> {
-        logger.info("Deactivating staff member: $staffId")
-
-        return try {
-            offerFacade.deactivateStaffMember(businessId, staffId)
-            logger.info("Successfully deactivated staff member: $staffId")
+            offerFacade.assignServicesToEmployee(businessId, employeeKeycloakId, request.serviceIds)
             ResponseEntity.ok(
                 SuccessResponse(
-                    message = "Staff member deactivated successfully",
-                    details = "The staff member will no longer be able to access the system"
+                    message = "Services assigned to employee successfully",
+                    details = "Employee can now perform ${request.serviceIds.size} services"
                 )
             )
         } catch (e: Exception) {
-            logger.error("Failed to deactivate staff member: $staffId", e)
+            logger.error("Failed to assign services to employee: $employeeKeycloakId", e)
             ResponseEntity.badRequest().body(
                 ErrorResponse(
-                    error = "STAFF_MEMBER_DEACTIVATION_FAILED",
-                    message = e.message ?: "Failed to deactivate staff member",
-                    details = "Please verify permissions and try again"
+                    error = "SERVICE_ASSIGNMENT_FAILED",
+                    message = e.message ?: "Failed to assign services",
+                    details = "Please verify the service IDs and permissions"
+                )
+            )
+        }
+    }
+
+    @GetMapping("/{businessId}/employees/{employeeKeycloakId}/services")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_OWNER') or hasRole('EMPLOYEE')")
+    fun getEmployeeServices(
+        @PathVariable businessId: UUID,
+        @PathVariable employeeKeycloakId: String
+    ): ResponseEntity<*> {
+        logger.debug("Retrieving services for employee: $employeeKeycloakId")
+
+        return try {
+            val services = offerFacade.getEmployeeServices(businessId, employeeKeycloakId)
+            ResponseEntity.ok(
+                EmployeeServicesResponse(
+                    businessId = businessId,
+                    employeeKeycloakId = employeeKeycloakId,
+                    services = services,
+                    totalCount = services.size
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to retrieve services for employee: $employeeKeycloakId", e)
+            ResponseEntity.badRequest().body(
+                ErrorResponse(
+                    error = "EMPLOYEE_SERVICES_RETRIEVAL_FAILED",
+                    message = e.message ?: "Failed to retrieve employee services",
+                    details = "Please verify permissions and access"
                 )
             )
         }
@@ -530,4 +508,14 @@ data class StaffServicesResponse(
     val staffId: UUID,
     val services: List<Service>,
     val totalCount: Int
+)
+
+data class CreateBusinessProfileRequest(
+    val name: String,
+    val description: String?,
+    val street: String,
+    val city: String,
+    val state: String,
+    val postalCode: String,
+    val ownerPhone: String?
 )

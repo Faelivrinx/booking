@@ -1,9 +1,6 @@
 package com.dominikdev.booking.identity.application
 
-import com.dominikdev.booking.identity.ClientRegistrationRequest
-import com.dominikdev.booking.identity.CreateBusinessOwnerRequest
-import com.dominikdev.booking.identity.CreateEmployeeAccountRequest
-import com.dominikdev.booking.identity.UpdateProfileRequest
+import com.dominikdev.booking.identity.*
 import com.dominikdev.booking.identity.domain.IdentityProvider
 import com.dominikdev.booking.identity.domain.*
 import org.springframework.transaction.annotation.Transactional
@@ -28,7 +25,7 @@ open class IdentityApplicationService(
             ?: throw IdentityException("Failed to retrieve created business owner")
     }
 
-    fun createEmployeeAccount(request: CreateEmployeeAccountRequest): UserProfile {
+    fun createEmployeeAccount(request: CreateEmployeeAccountRequest): EmployeeCreationResult  {
         validateEmail(request.email)
 
         val keycloakId = identityProvider.createEmployeeUser(
@@ -40,8 +37,12 @@ open class IdentityApplicationService(
             businessId = request.businessId
         )
 
-        return identityProvider.getUserByKeycloakId(keycloakId)
+        val userProfile = identityProvider.getUserByKeycloakId(keycloakId)
             ?: throw IdentityException("Failed to retrieve created employee")
+
+        return EmployeeCreationResult(
+            userProfile = userProfile
+        )
     }
 
     fun registerClient(request: ClientRegistrationRequest): UserProfile {

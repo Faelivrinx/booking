@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 data class StaffServiceAssignment(
-    val staffId: UUID,
+    val employeeId: UUID,
     val serviceId: UUID,
     val businessId: UUID,
     val assignedAt: LocalDateTime = LocalDateTime.now()

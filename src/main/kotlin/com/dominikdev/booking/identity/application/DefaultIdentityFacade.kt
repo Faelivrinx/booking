@@ -43,10 +43,33 @@ class DefaultIdentityFacade(
     override fun createEmployeeAccount(request: CreateEmployeeAccountRequest): UserAccount {
         logger.info("Creating employee account: ${request.email}")
 
-        val userProfile = identityApplicationService.createEmployeeAccount(request)
-        return mapToUserAccount(userProfile).also {
-            logger.info("Successfully created employee: ${it.keycloakId}")
+        val result = identityApplicationService.createEmployeeAccount(request)
+        val userAccount = mapToUserAccount(result.userProfile)
+
+        try {
+            val addStaffRequest = AddStaffMemberRequest(
+                firstName = request.firstName,
+                lastName = request.lastName,
+                email = request.email,
+                phoneNumber = request.phoneNumber,
+                jobTitle = request.jobTitle,
+                businessName = "" // Not needed since we have businessId
+            )
+
+            val staffMember = offerFacade.addStaffMemberForEmployee(
+                businessId = request.businessId,
+                keycloakId = result.userProfile.keycloakId,
+                request = addStaffRequest
+            )
+
+            logger.info("Automatically created staff member: ${staffMember.id}")
+
+        } catch (e: Exception) {
+            logger.error("Failed to create staff member for employee: ${request.email}", e)
         }
+
+        logger.info("Successfully created employee: ${userAccount.keycloakId}")
+        return userAccount
     }
 
     override fun getEmployeeAccount(keycloakId: String): UserAccount? {
